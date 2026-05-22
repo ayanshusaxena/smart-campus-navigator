@@ -1,0 +1,800 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Path Builder - Smart Campus Navigator</title>
+  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+  
+  <style>
+    /* CSS Reset and setup */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body, html {
+      margin: 0; height: 100%; width: 100%;
+      font-family: 'Inter', -apple-system, sans-serif;
+      overflow: hidden;
+      background: #f8f9fa;
+    }
+
+    /* Navbar styling */
+    .navbar {
+      height: 60px;
+      padding: 0 20px;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 1000;
+    }
+    
+    .navbar-title { font-weight: 600; font-size: 18px; color: #1f2937; }
+    .nav-links a { margin-left: 15px; color: #4b5563; text-decoration: none; font-size: 14px; font-weight: 500; }
+    .nav-links a:hover { color: #111827; }
+
+    /* Layout structure */
+    .app-container {
+      display: flex;
+      height: 100%;
+      padding-top: 60px; /* offset for navbar */
+    }
+
+    .left-panel {
+      width: 280px;
+      height: 100%;
+      background: #ffffff;
+      border-right: 1px solid #e5e7eb;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      z-index: 2; /* above map */
+      box-shadow: 2px 0 10px rgba(0,0,0,0.03);
+    }
+    
+    .map-container {
+      flex-grow: 1;
+      height: 100%;
+      z-index: 1;
+    }
+
+    /* Cards */
+    .card {
+      margin: 16px;
+      padding: 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .card-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 700;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+
+    /* Buttons */
+    .btn {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: none;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      display: block;
+      margin-bottom: 8px;
+      text-align: center;
+      transition: background 0.2s;
+    }
+    .btn-blue {
+      background: #2563eb;
+      color: white;
+    }
+    .btn-blue:hover { background: #1d4ed8; }
+    
+    .btn-small {
+      padding: 6px 10px;
+      font-size: 12px;
+    }
+    .btn-secondary {
+      background: #e5e7eb;
+      color: #374151;
+    }
+    .btn-secondary:hover { background: #d1d5db; }
+    
+    .btn-red {
+      background: #fee2e2;
+      color: #b91c1c;
+      width: auto;
+      display: inline-block;
+    }
+    .btn-red:hover { background: #fecaca; }
+
+    /* Inputs/Text */
+    .instructions {
+      font-size: 12px;
+      color: #6b7280;
+      margin-bottom: 12px;
+      line-height: 1.5;
+    }
+
+    .status-badge {
+      font-size: 13px;
+      padding: 6px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      font-weight: 500;
+      text-align: center;
+    }
+    .status-default { background: #f3f4f6; color: #4b5563; }
+    .status-success { background: #dcfce7; color: #166534; }
+    .status-info { background: #dbeafe; color: #1e40af; }
+
+    .route-legend {
+      display: flex; gap: 12px; margin-top: 6px; font-size: 11px; color: #6b7280;
+      justify-content: center;
+    }
+    .route-legend span::before {
+      content: ''; display: inline-block; width: 16px; height: 3px;
+      border-radius: 2px; margin-right: 4px; vertical-align: middle;
+    }
+    .route-legend .leg-indoor::before { background: #2563eb; }
+    .route-legend .leg-outdoor::before { background: #00c853; }
+    
+    .form-group { margin-bottom: 12px; }
+    .form-label { display: block; font-size: 12px; color: #4b5563; margin-bottom: 4px; font-weight: 500; }
+    .form-select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    .result-div {
+      margin-top: 12px;
+      padding: 10px;
+      font-size: 13px;
+      border-radius: 6px;
+      background: #f3f4f6;
+      color: #374151;
+      font-weight: 500;
+      min-height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      flex-direction: column;
+    }
+    .hidden { display: none !important; }
+    
+    /* Pin label styles */
+    .pin-label-wrap {
+      background: transparent !important;
+      border: none !important;
+      pointer-events: none;
+    }
+    .pin-label-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: transparent;
+      padding: 2px 0;
+      white-space: nowrap;
+      pointer-events: none;
+      margin-top: 2px;
+    }
+    .pin-label-en {
+      font-size: 12px;
+      font-weight: 600;
+      color: #ffffff;
+      display: block;
+      font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+      text-shadow: 
+        0px 1px 3px rgba(0,0,0,0.9),
+        0px 0px 6px rgba(0,0,0,0.8),
+        1px 1px 0px rgba(0,0,0,0.9),
+        -1px -1px 0px rgba(0,0,0,0.9);
+    }
+  </style>
+</head>
+<body>
+
+  <header class="navbar">
+    <div class="navbar-title">Path Builder</div>
+    <div class="nav-links">
+      <a href="index.html">← Back to Map</a>
+      <a href="admin.html">⚙ Admin</a>
+    </div>
+  </header>
+
+  <div class="app-container">
+    <aside class="left-panel">
+      <!-- Card 0: Unified Campus Map Import -->
+      <div class="card">
+        <div class="card-title">📂 IMPORT CAMPUS MAP</div>
+        <button id="btn-import-campus-map" class="btn btn-blue">Import Campus Map</button>
+        <div class="instructions">
+          Upload GeoJSON containing:<br>
+          • Polygons (is_entrance=true) → Entrance zones<br>
+          • Regular Polygons → Buildings<br>
+          • LineStrings → Walking paths
+        </div>
+        <div id="campus-map-status" class="status-badge status-default">No map loaded</div>
+        <button id="btn-clear-campus-map" class="btn btn-red btn-small hidden">Clear</button>
+        <input type="file" id="campus-map-file-input" accept=".geojson,.json" class="hidden">
+      </div>
+
+      <!-- Card 1: Test Navigation -->
+      <div class="card">
+        <div class="card-title">TEST NAVIGATION</div>
+        <div class="form-group">
+          <label class="form-label">From</label>
+          <select id="nav-from" class="form-select"></select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">To</label>
+          <select id="nav-to" class="form-select"></select>
+        </div>
+        <div style="display: flex; gap: 8px;">
+          <button id="btn-find-path" class="btn btn-blue" style="flex: 1; margin-bottom: 0;">Find Path</button>
+          <button id="btn-clear-path" class="btn btn-secondary btn-small" style="margin-bottom: 0;">Clear</button>
+        </div>
+        <div id="path-result" class="result-div">Select two locations</div>
+      </div>
+
+      <!-- Card 2: Export -->
+      <div class="card">
+        <div class="card-title">EXPORT</div>
+        <button id="btn-export-geojson" class="btn btn-blue">Export GeoJSON</button>
+        <div class="instructions" style="text-align: center; margin-top: 8px;">Auto-saved to localStorage</div>
+      </div>
+    </aside>
+
+    <div id="map" class="map-container"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="js/locations.js"></script>
+  <script src="js/routing.js"></script>
+  <script>
+    const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2FsbW9uMjMxIiwiYSI6ImNtbTM1MDRhdjBkZHgycHIzN3hkaTU1MGUifQ.2RR52XcJr8gwvHKhgoQRFA';
+    const LS_GEOJSON = 'campusGeoJSON';
+    const LS_BUILDING = 'campusBuildingGeoJSON';
+    const LS_PINS = 'campusPins';
+    // JUNCTION_THRESHOLD_M, PIN_SNAP_THRESHOLD_M, WALK_SPEED are defined in js/routing.js
+    const palette = ['#1a73e8','#34a853','#fbbc04','#ea4335','#8e44ad','#16a085','#e67e22','#2c3e50'];
+
+    // State
+    let map;
+    let pathsLayer = L.layerGroup();
+    let pinsLayer = L.layerGroup();
+    let resultLayer = L.layerGroup();
+    let buildingLayer = L.layerGroup();
+    let state_animInterval = null;
+    
+    let loadedGeoJSON = null; // raw GeoJSON FeatureCollection
+    let state_paths = [];     // [{id, name, color, points:[{lat,lng}]}]
+    let state_entranceNodes = []; // [{id, lat, lng, buildingId}]
+    let state_entrancePolygons = []; // [{lat,lng}[]] — rings of entrance zone polygons
+    let thePins = [];
+    let buildingPolygons = []; // array of polygon rings [{lat,lng}[]]
+
+    // isInsideBuilding(), isInsideEntrancePolygon() are defined in js/routing.js
+
+    function loadBuildingGeoJSON(geojson) {
+      buildingPolygons = [];
+      state_entrancePolygons = [];
+      buildingLayer.clearLayers();
+      if (!geojson?.features) return;
+      let buildingCount = 0;
+      let entranceCount = 0;
+      
+      geojson.features.forEach(feat => {
+        // Check if this is an entrance polygon (is_entrance === true)
+        const isEntrance = feat.properties?.is_entrance === true;
+        const targetArray = isEntrance ? state_entrancePolygons : buildingPolygons;
+        const targetName = isEntrance ? 'entrance' : 'building';
+        
+        if (feat.geometry?.type === 'Polygon') {
+          const ring = feat.geometry.coordinates[0].map(c => ({ lng: c[0], lat: c[1] }));
+          targetArray.push(ring);
+          
+          // Render on map: entrance zones in bright green with dashed stroke, buildings in blue
+          const isEntranceFeature = isEntrance;
+          const color = isEntranceFeature ? '#00FF00' : '#2563eb';
+          const dashArray = isEntranceFeature ? '5 5' : undefined;
+          const opacity = isEntranceFeature ? 0.8 : 0.5;
+          const fillOpacity = isEntranceFeature ? 0.15 : 0.08;
+          
+          L.polygon(ring.map(p => [p.lat, p.lng]), {
+            color: color,
+            weight: isEntranceFeature ? 2 : 1,
+            opacity: opacity,
+            dashArray: dashArray,
+            fillColor: color,
+            fillOpacity: fillOpacity
+          }).addTo(buildingLayer);
+          
+          if (isEntrance) entranceCount++; else buildingCount++;
+        } else if (feat.geometry?.type === 'MultiPolygon') {
+          feat.geometry.coordinates.forEach(poly => {
+            const ring = poly[0].map(c => ({ lng: c[0], lat: c[1] }));
+            targetArray.push(ring);
+            
+            const isEntranceFeature = isEntrance;
+            const color = isEntranceFeature ? '#00FF00' : '#2563eb';
+            const dashArray = isEntranceFeature ? '5 5' : undefined;
+            const opacity = isEntranceFeature ? 0.8 : 0.5;
+            const fillOpacity = isEntranceFeature ? 0.15 : 0.08;
+            
+            L.polygon(ring.map(p => [p.lat, p.lng]), {
+              color: color,
+              weight: isEntranceFeature ? 2 : 1,
+              opacity: opacity,
+              dashArray: dashArray,
+              fillColor: color,
+              fillOpacity: fillOpacity
+            }).addTo(buildingLayer);
+            
+            if (isEntrance) entranceCount++; else buildingCount++;
+          });
+        }
+      });
+      
+      const badge = document.getElementById('campus-map-status');
+      const clearBtn = document.getElementById('btn-clear-campus-map');
+      if (buildingCount > 0 || entranceCount > 0) {
+        let statusText = [];
+        if (buildingCount > 0) statusText.push(`${buildingCount} buildings`);
+        if (entranceCount > 0) statusText.push(`${entranceCount} entrances`);
+        badge.textContent = `✓ ${statusText.join(' · ')}`;
+        badge.className = 'status-badge status-success';
+        clearBtn.classList.remove('hidden');
+      } else {
+        badge.textContent = 'No map loaded';
+        badge.className = 'status-badge status-default';
+        clearBtn.classList.add('hidden');
+      }
+    }
+
+    // haversine(), calculatePathLength(), buildRoutingGraph(), runDijkstra() are defined in js/routing.js
+
+    // Init map
+    function initMap() {
+      map = L.map('map', {
+        zoomControl: true
+      }).setView([26.1923, 78.1743], 18);
+      
+      L.tileLayer(
+        'https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=' + MAPBOX_TOKEN,
+        {
+          attribution: '© Mapbox © OpenStreetMap',
+          tileSize: 512,
+          zoomOffset: -1,
+          maxNativeZoom: 19,
+          maxZoom: 22,
+          minZoom: 16
+        }
+      ).addTo(map);
+
+      buildingLayer.addTo(map);
+      pathsLayer.addTo(map);
+      pinsLayer.addTo(map);
+      resultLayer.addTo(map);
+    }
+
+    function loadPins() {
+      try {
+        const raw = localStorage.getItem(LS_PINS);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            thePins = parsed;
+          }
+        }
+      } catch (_) {}
+      
+      if (!thePins || thePins.length === 0) {
+        thePins = window.CAMPUS_LOCATIONS || [];
+      }
+    }
+
+    function renderPins() {
+      pinsLayer.clearLayers();
+      thePins.forEach(pin => {
+        // Small circle marker for pin
+        L.circleMarker([pin.lat, pin.lng], {
+          radius: 4,
+          fillColor: '#FFC107',
+          color: '#fff',
+          weight: 1,
+          opacity: 1,
+          fillOpacity: 1
+        }).addTo(pinsLayer);
+        
+        // Text label
+        const labelDiv = L.divIcon({
+          className: 'pin-label-wrap',
+          html: `<div class="pin-label-inner"><span class="pin-label-en">${pin.nameEn}</span></div>`,
+          iconSize: [120, 30],
+          iconAnchor: [60, -8],
+        });
+        L.marker([pin.lat, pin.lng], { icon: labelDiv }).addTo(pinsLayer);
+      });
+    }
+
+    function populateNavDropdowns() {
+      const fromSel = document.getElementById('nav-from');
+      const toSel = document.getElementById('nav-to');
+      
+      fromSel.innerHTML = '<option value="">Select Origin...</option>';
+      toSel.innerHTML = '<option value="">Select Destination...</option>';
+      
+      thePins.forEach(pin => {
+        fromSel.innerHTML += `<option value="${pin.id}">${pin.nameEn}</option>`;
+        toSel.innerHTML += `<option value="${pin.id}">${pin.nameEn}</option>`;
+      });
+    }
+
+    // Unified GeoJSON processing: separates features into buildings, entrances, and paths
+    function processUnifiedGeoJSON(geojson) {
+      if (!geojson || geojson.type !== 'FeatureCollection' || !geojson.features) return;
+      
+      loadedGeoJSON = geojson;
+      state_paths = [];
+      state_entrancePolygons = [];
+      buildingPolygons = [];
+      state_entranceNodes = [];
+      let totalDist = 0;
+      let pathCount = 0;
+      let buildingCount = 0;
+      let entranceCount = 0;
+      
+      // First pass: process polygons (both buildings and entrance zones)
+      geojson.features.forEach(feature => {
+        if (feature.geometry?.type === 'Polygon') {
+          const isEntrance = feature.properties?.is_entrance === true;
+          const ring = feature.geometry.coordinates[0].map(c => ({ lng: c[0], lat: c[1] }));
+          
+          if (isEntrance) {
+            state_entrancePolygons.push(ring);
+            entranceCount++;
+          } else {
+            buildingPolygons.push(ring);
+            buildingCount++;
+          }
+        } else if (feature.geometry?.type === 'MultiPolygon') {
+          const isEntrance = feature.properties?.is_entrance === true;
+          feature.geometry.coordinates.forEach(poly => {
+            const ring = poly[0].map(c => ({ lng: c[0], lat: c[1] }));
+            if (isEntrance) {
+              state_entrancePolygons.push(ring);
+              entranceCount++;
+            } else {
+              buildingPolygons.push(ring);
+              buildingCount++;
+            }
+          });
+        }
+      });
+      
+      // Second pass: process LineStrings (paths)
+      let pathIndex = 0;
+      geojson.features.forEach(feature => {
+        if (feature.geometry && feature.geometry.type === 'LineString') {
+          const points = feature.geometry.coordinates.map(([lng, lat]) => ({lat, lng}));
+          const pathDist = calculatePathLength(points);
+          totalDist += pathDist;
+          
+          state_paths.push({
+            id: 'path_' + pathIndex,
+            name: feature.properties?.name || feature.properties?.Name || ('Path ' + (pathIndex+1)),
+            color: palette[pathIndex % palette.length],
+            points
+          });
+          pathCount++;
+          pathIndex++;
+        }
+      });
+      
+      // Third pass: process entrance nodes (Points with type:'entrance')
+      geojson.features.forEach(feature => {
+        if (
+          feature.geometry &&
+          feature.geometry.type === 'Point' &&
+          feature.properties?.type === 'entrance'
+        ) {
+          const [lng, lat] = feature.geometry.coordinates || [];
+          if (Number.isFinite(lat) && Number.isFinite(lng)) {
+            state_entranceNodes.push({
+              id: 'entrance_' + state_entranceNodes.length,
+              lat,
+              lng,
+              buildingId: feature.properties.buildingId
+            });
+          }
+        }
+      });
+      
+      // Save to localStorage using unified key
+      localStorage.setItem(LS_GEOJSON, JSON.stringify(loadedGeoJSON));
+      
+      // Render buildings and entrances on the map
+      renderBuildingsAndEntrances();
+      renderGeoJSONPaths();
+      
+      // Update UI status badge
+      const badge = document.getElementById('campus-map-status');
+      const clearBtn = document.getElementById('btn-clear-campus-map');
+      let statusParts = [];
+      if (buildingCount > 0) statusParts.push(`${buildingCount} buildings`);
+      if (entranceCount > 0) statusParts.push(`${entranceCount} entrances`);
+      if (pathCount > 0) statusParts.push(`${pathCount} paths (${Math.round(totalDist)}m)`);
+      
+      if (statusParts.length > 0) {
+        badge.textContent = `✓ ${statusParts.join(' · ')}`;
+        badge.className = 'status-badge status-success';
+        clearBtn.classList.remove('hidden');
+      } else {
+        badge.textContent = 'No map loaded';
+        badge.className = 'status-badge status-default';
+        clearBtn.classList.add('hidden');
+      }
+      
+      populateNavDropdowns();
+    }
+
+    // Render buildings and entrance polygons on the map
+    function renderBuildingsAndEntrances() {
+      buildingLayer.clearLayers();
+      
+      // Render building polygons (blue)
+      buildingPolygons.forEach(ring => {
+        L.polygon(ring.map(p => [p.lat, p.lng]), {
+          color: '#2563eb', weight: 1, opacity: 0.5,
+          fillColor: '#2563eb', fillOpacity: 0.08
+        }).addTo(buildingLayer);
+      });
+      
+      // Render entrance polygons (bright green with dashed stroke)
+      state_entrancePolygons.forEach(ring => {
+        L.polygon(ring.map(p => [p.lat, p.lng]), {
+          color: '#00FF00', weight: 2, opacity: 0.8, dashArray: '5 5',
+          fillColor: '#00FF00', fillOpacity: 0.15
+        }).addTo(buildingLayer);
+      });
+    }
+    
+    function renderGeoJSONPaths() {
+      pathsLayer.clearLayers();
+      state_paths.forEach(p => {
+        L.polyline(p.points, {
+          color: p.color,
+          weight: 4,
+          opacity: 0.8
+        }).bindPopup(p.name).addTo(pathsLayer);
+      });
+    }
+
+    // buildRoutingGraph() and runDijkstra() are defined in js/routing.js
+
+    function drawPathResult(pathIds, graph) {
+      resultLayer.clearLayers();
+      if (state_animInterval) clearInterval(state_animInterval);
+
+      const hasBuildingData = buildingPolygons.length > 0 && graph.indoorNodes && graph.indoorNodes.size > 0;
+
+      // Build segments with indoor/outdoor classification
+      const segments = []; // { latlng: [lat, lng], indoor: bool }
+
+      for (let i = 0; i < pathIds.length - 1; i++) {
+        const fromId = pathIds[i];
+        const toId = pathIds[i + 1];
+
+        const edge = graph.edges.find(e => e.from === fromId && e.to === toId);
+
+        let coordFrom, coordTo;
+        if (edge && edge.coordFrom && edge.coordTo) {
+          coordFrom = [edge.coordFrom.lat, edge.coordFrom.lng];
+          coordTo = [edge.coordTo.lat, edge.coordTo.lng];
+        } else {
+          const fromNode = graph.nodes.get(fromId);
+          const toNode = graph.nodes.get(toId);
+          if (fromNode) coordFrom = [fromNode.lat, fromNode.lng];
+          if (toNode) coordTo = [toNode.lat, toNode.lng];
+        }
+
+        if (!coordFrom || !coordTo) continue;
+
+        // Classify: edge is indoor if BOTH endpoints are indoor nodes
+        const isIndoorEdge = hasBuildingData &&
+          graph.indoorNodes.has(fromId) && graph.indoorNodes.has(toId);
+
+        segments.push({ from: coordFrom, to: coordTo, indoor: isIndoorEdge });
+      }
+
+      if (segments.length === 0) return;
+
+      // Group consecutive segments by type for cleaner polylines
+      const groups = []; // { indoor: bool, latlngs: [] }
+      segments.forEach((seg, idx) => {
+        if (idx === 0 || seg.indoor !== groups[groups.length - 1].indoor) {
+          // Start new group — include the from-point
+          groups.push({ indoor: seg.indoor, latlngs: [seg.from, seg.to] });
+        } else {
+          groups[groups.length - 1].latlngs.push(seg.to);
+        }
+      });
+
+      // Ensure groups connect: each group's first point = previous group's last point
+      for (let i = 1; i < groups.length; i++) {
+        const prevLast = groups[i - 1].latlngs[groups[i - 1].latlngs.length - 1];
+        groups[i].latlngs.unshift(prevLast);
+      }
+
+      const allLatlngs = [];
+      const lineRefs = [];
+
+      groups.forEach(group => {
+        const color = group.indoor ? '#2563eb' : '#00c853';
+        const line = L.polyline(group.latlngs, {
+          color,
+          weight: 5,
+          opacity: 0.95,
+          dashArray: '10 8'
+        }).addTo(resultLayer);
+        lineRefs.push(line);
+        group.latlngs.forEach(ll => allLatlngs.push(ll));
+      });
+
+      if (allLatlngs.length > 0) {
+        const bounds = L.latLngBounds(allLatlngs);
+        map.fitBounds(bounds, { padding: [40, 40] });
+      }
+
+      let offset = 0;
+      state_animInterval = setInterval(() => {
+        lineRefs.forEach(line => {
+          const el = line.getElement ? line.getElement() : line._path;
+          if (!el) return;
+          el.style.strokeDashoffset = String(offset);
+        });
+        offset -= 2;
+      }, 80);
+    }
+
+    // Event Listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      initMap();
+      loadPins();
+      renderPins();
+      populateNavDropdowns();
+      
+      // Auto-load unified campus map from localStorage
+      const saved = localStorage.getItem(LS_GEOJSON);
+      if (saved) {
+        try { processUnifiedGeoJSON(JSON.parse(saved)); } catch(_) {}
+      }
+      
+      // ── Unified Campus Map import wiring ──
+      document.getElementById('btn-import-campus-map').onclick = () =>
+        document.getElementById('campus-map-file-input').click();
+
+      document.getElementById('campus-map-file-input').onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          try {
+            processUnifiedGeoJSON(JSON.parse(event.target.result));
+          } catch(err) {
+            alert('Invalid GeoJSON file');
+          }
+        };
+        reader.readAsText(file);
+      };
+
+      document.getElementById('btn-clear-campus-map').onclick = () => {
+        localStorage.removeItem(LS_GEOJSON);
+        loadedGeoJSON = null;
+        state_paths = [];
+        state_entranceNodes = [];
+        state_entrancePolygons = [];
+        buildingPolygons = [];
+        buildingLayer.clearLayers();
+        pathsLayer.clearLayers();
+        resultLayer.clearLayers();
+        
+        const badge = document.getElementById('campus-map-status');
+        badge.textContent = 'No map loaded';
+        badge.className = 'status-badge status-default';
+        document.getElementById('btn-clear-campus-map').classList.add('hidden');
+      };
+      
+      document.getElementById('btn-find-path').onclick = () => {
+        const fromId = document.getElementById('nav-from').value;
+        const toId = document.getElementById('nav-to').value;
+        const resultDiv = document.getElementById('path-result');
+        
+        if (!fromId || !toId) {
+          resultDiv.textContent = 'Select two locations';
+          resultDiv.style.backgroundColor = '#f3f4f6';
+          resultDiv.style.color = '#374151';
+          return;
+        }
+        if (fromId === toId) {
+          resultDiv.textContent = 'Same location selected';
+          resultDiv.style.backgroundColor = '#f3f4f6';
+          resultDiv.style.color = '#374151';
+          return;
+        }
+        if (state_paths.length === 0) {
+          resultDiv.textContent = 'No paths loaded - import GeoJSON first';
+          resultDiv.style.backgroundColor = '#f3f4f6';
+          resultDiv.style.color = '#374151';
+          return;
+        }
+        
+        const graph = buildRoutingGraph(state_paths, thePins, state_entranceNodes);
+        const result = runDijkstra(graph, fromId, toId);
+        
+        if (result) {
+          drawPathResult(result.path, graph);
+          const t = Math.max(1, Math.round(result.totalDist / WALK_SPEED));
+          const fromName = thePins.find(p=>p.id===fromId).nameEn;
+          const toName = thePins.find(p=>p.id===toId).nameEn;
+          // Check if route uses indoor segments
+          const hasIndoor = buildingPolygons.length > 0 && result.path.some(id => graph.indoorNodes.has(id));
+          const legendHtml = hasIndoor
+            ? `<div class="route-legend"><span class="leg-indoor">Indoor</span><span class="leg-outdoor">Outdoor</span></div>`
+            : '';
+          resultDiv.innerHTML = `<span><strong>${fromName}</strong> → <strong>${toName}</strong></span><span style="font-size: 11px; margin-top:2px;">${Math.round(result.totalDist)}m · ~${t} min</span>${legendHtml}`;
+          resultDiv.style.backgroundColor = '#dcfce7';
+          resultDiv.style.color = '#166534';
+        } else {
+          resultLayer.clearLayers();
+          resultDiv.textContent = 'No path found — check connections';
+          resultDiv.style.backgroundColor = '#fee2e2';
+          resultDiv.style.color = '#b91c1c';
+        }
+      };
+      
+      document.getElementById('btn-clear-path').onclick = () => {
+        document.getElementById('nav-from').value = '';
+        document.getElementById('nav-to').value = '';
+        resultLayer.clearLayers();
+        const resultDiv = document.getElementById('path-result');
+        resultDiv.textContent = 'Select two locations';
+        resultDiv.style.backgroundColor = '#f3f4f6';
+        resultDiv.style.color = '#374151';
+        map.setView([26.1923, 78.1743], 18);
+      };
+      
+      document.getElementById('btn-export-geojson').onclick = () => {
+        if (!loadedGeoJSON) {
+          alert('No GeoJSON loaded to export');
+          return;
+        }
+        const blob = new Blob([JSON.stringify(loadedGeoJSON, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "campus-paths.geojson";
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+    });
+  </script>
+</body>
+</html>

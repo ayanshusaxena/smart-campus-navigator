@@ -1,0 +1,1650 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Terminal — Smart Campus Navigator</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+    <style>
+        /* ── Tokens ─────────────────────────────────────── */
+        :root {
+            --font: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif;
+            --c-text: #1c1c1e;
+            --c-muted: #3a3a3c;
+            --c-subtle: #6b6b6e;
+            --c-border: rgba(0, 0, 0, 0.09);
+            --c-blue: #007AFF;
+            --c-green: #34C759;
+            --c-red: #FF3B30;
+            --c-orange: #FF9500;
+            --panel-w: 350px;
+            --nav-h: 56px;
+            --ease: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        html,
+        body {
+            height: 100%;
+            overflow: hidden;
+            font-family: var(--font);
+            color: var(--c-text);
+            background: #000;
+        }
+
+        /* ── Navbar ─────────────────────────────────────── */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: var(--nav-h);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            z-index: 1100;
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.5);
+            box-shadow: 0 1px 0 rgba(0, 0, 0, 0.09);
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .nav-title {
+            font-size: 15px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+        }
+
+        .badge-admin {
+            background: var(--c-red);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            padding: 4px 10px;
+            border-radius: 999px;
+            text-transform: uppercase;
+            animation: pulse-badge 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-badge {
+
+            0%,
+            100% {
+                box-shadow: 0 0 0 0 rgba(255, 59, 48, 0.4);
+            }
+
+            50% {
+                box-shadow: 0 0 0 6px rgba(255, 59, 48, 0);
+            }
+        }
+
+        .btn-back {
+            background: rgba(120, 120, 128, 0.14);
+            border: none;
+            border-radius: 10px;
+            padding: 7px 14px;
+            font-family: var(--font);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--c-muted);
+            cursor: pointer;
+            transition: var(--ease);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-back:hover {
+            background: rgba(120, 120, 128, 0.24);
+            color: var(--c-text);
+        }
+
+        /* ── Layout ─────────────────────────────────────── */
+        .layout {
+            position: fixed;
+            top: var(--nav-h);
+            left: 0;
+            right: 0;
+            bottom: 0;
+            display: flex;
+        }
+
+        /* ── Left Panel ─────────────────────────────────── */
+        .panel {
+            width: var(--panel-w);
+            flex-shrink: 0;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: rgba(248, 248, 250, 0.97);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border-right: 1px solid var(--c-border);
+            box-shadow: 4px 0 24px rgba(0, 0, 0, 0.06);
+            overflow: hidden;
+        }
+
+        .panel-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .panel-scroll::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .panel-scroll::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .panel-scroll::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 4px;
+        }
+
+        .section-title {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            color: var(--c-subtle);
+            margin-bottom: 8px;
+        }
+
+        /* Glass card grouping */
+        .card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        /* Form fields */
+        label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--c-muted);
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 9px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            background: rgba(255, 255, 255, 0.95);
+            font-family: var(--font);
+            font-size: 14px;
+            color: var(--c-text);
+            outline: none;
+            transition: var(--ease);
+            resize: none;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus,
+        select:focus {
+            border-color: rgba(0, 122, 255, 0.45);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+            background: #fff;
+        }
+
+        textarea {
+            min-height: 72px;
+            line-height: 1.5;
+        }
+
+        select {
+            cursor: pointer;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b6b6e' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            padding-right: 32px;
+        }
+
+        /* Row layout for short fields */
+        .row-2 {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        /* Tier pills */
+        .tier-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        .tier-pill {
+            flex: 1;
+            padding: 7px 4px;
+            border-radius: 10px;
+            border: 1.5px solid transparent;
+            background: rgba(120, 120, 128, 0.1);
+            font-size: 11px;
+            font-weight: 600;
+            text-align: center;
+            cursor: pointer;
+            color: var(--c-muted);
+            transition: var(--ease);
+        }
+
+        .tier-pill:hover {
+            background: rgba(0, 122, 255, 0.08);
+        }
+
+        .tier-pill.active {
+            background: var(--c-blue);
+            color: #fff;
+            border-color: var(--c-blue);
+            box-shadow: 0 3px 10px rgba(0, 122, 255, 0.3);
+        }
+
+        /* Coordinate display */
+        .coord-display {
+            font-size: 12px;
+            color: var(--c-subtle);
+            background: rgba(0, 0, 0, 0.04);
+            border-radius: 8px;
+            padding: 7px 10px;
+            font-variant-numeric: tabular-nums;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        /* Buttons */
+        .btn {
+            width: 100%;
+            padding: 11px;
+            border-radius: 13px;
+            border: none;
+            font-family: var(--font);
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--ease);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+        }
+
+        .btn-blue {
+            background: var(--c-blue);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(0, 122, 255, 0.3);
+        }
+
+        .btn-green {
+            background: var(--c-green);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(52, 199, 89, 0.3);
+        }
+
+        .btn-red {
+            background: var(--c-red);
+            color: #fff;
+            box-shadow: 0 4px 16px rgba(255, 59, 48, 0.25);
+        }
+
+        .btn-ghost {
+            background: rgba(120, 120, 128, 0.12);
+            color: var(--c-muted);
+        }
+
+        .btn-blue:hover {
+            background: #0063d1;
+            transform: translateY(-1px);
+        }
+
+        .btn-green:hover {
+            background: #28a745;
+            transform: translateY(-1px);
+        }
+
+        .btn-red:hover {
+            background: #cc2e24;
+            transform: translateY(-1px);
+        }
+
+        .btn-ghost:hover {
+            background: rgba(120, 120, 128, 0.22);
+            color: var(--c-text);
+        }
+
+        .btn:disabled {
+            opacity: 0.45;
+            pointer-events: none;
+        }
+
+        .btn-sm {
+            padding: 6px 10px;
+            font-size: 12px;
+            border-radius: 9px;
+            border: none;
+            cursor: pointer;
+            font-family: var(--font);
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            transition: var(--ease);
+        }
+
+        .btn-sm-red {
+            background: rgba(255, 59, 48, 0.1);
+            color: var(--c-red);
+        }
+
+        .btn-sm-blue {
+            background: rgba(0, 122, 255, 0.1);
+            color: var(--c-blue);
+        }
+
+        .btn-sm-red:hover {
+            background: rgba(255, 59, 48, 0.18);
+        }
+
+        .btn-sm-blue:hover {
+            background: rgba(0, 122, 255, 0.18);
+        }
+
+        /* Pin-drop mode bar */
+        #drop-mode-bar {
+            display: none;
+            padding: 10px 14px;
+            background: rgba(0, 122, 255, 0.1);
+            border: 1px solid rgba(0, 122, 255, 0.25);
+            border-radius: 12px;
+            font-size: 13px;
+            color: var(--c-blue);
+            font-weight: 500;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #drop-mode-bar.visible {
+            display: flex;
+        }
+
+        .ping {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--c-blue);
+            animation: ping 1.2s ease-in-out infinite;
+        }
+
+        @keyframes ping {
+
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+
+            50% {
+                opacity: 0.5;
+                transform: scale(1.4);
+            }
+        }
+
+        /* Pins list */
+        .pin-list {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .pin-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 12px;
+            padding: 9px 10px;
+            transition: var(--ease);
+            cursor: default;
+        }
+
+        .pin-item:hover {
+            background: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.07);
+        }
+
+        .pin-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            flex-shrink: 0;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .pin-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .pin-name {
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .pin-cat-badge {
+            font-size: 10px;
+            padding: 2px 7px;
+            border-radius: 999px;
+            background: rgba(120, 120, 128, 0.1);
+            color: var(--c-subtle);
+            margin-top: 1px;
+            display: inline-block;
+        }
+
+        .pin-actions {
+            display: flex;
+            gap: 4px;
+            flex-shrink: 0;
+        }
+
+        .drag-handle {
+            cursor: grab;
+            color: var(--c-subtle);
+            font-size: 14px;
+            padding: 2px 4px;
+        }
+
+        .drag-handle:active {
+            cursor: grabbing;
+        }
+
+        /* Pin count */
+        .pin-count {
+            font-size: 12px;
+            color: var(--c-subtle);
+            text-align: center;
+            padding: 4px 0;
+        }
+
+        /* Export/import */
+        .io-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+        }
+
+        /* ── Map Container ───────────────────────────────── */
+        #map {
+            flex: 1;
+            height: 100%;
+            cursor: default;
+        }
+
+        #map.drop-mode {
+            cursor: crosshair !important;
+        }
+
+        #map.drop-mode .leaflet-container {
+            cursor: crosshair !important;
+        }
+
+        /* ── Context Menu ────────────────────────────────── */
+        #ctx-menu {
+            position: fixed;
+            z-index: 9000;
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(0, 0, 0, 0.09);
+            border-radius: 14px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.16);
+            padding: 6px;
+            min-width: 170px;
+            display: none;
+        }
+
+        #ctx-menu.open {
+            display: block;
+        }
+
+        .ctx-item {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 9px 12px;
+            border-radius: 9px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .ctx-item:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .ctx-item.danger {
+            color: var(--c-red);
+        }
+
+        .ctx-item.danger:hover {
+            background: rgba(255, 59, 48, 0.08);
+        }
+
+        .ctx-divider {
+            height: 1px;
+            background: rgba(0, 0, 0, 0.07);
+            margin: 3px 6px;
+        }
+
+        /* ── Coordinate Tooltip (dragging) ───────────────── */
+        #drag-tooltip {
+            position: fixed;
+            z-index: 8000;
+            pointer-events: none;
+            display: none;
+            background: rgba(0, 0, 0, 0.75);
+            color: #fff;
+            font-size: 11px;
+            font-family: var(--font);
+            padding: 5px 10px;
+            border-radius: 8px;
+        }
+
+        /* ── Toasts ─────────────────────────────────────── */
+        #toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 9999;
+        }
+
+        .toast {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+            border-radius: 14px;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14);
+            padding: 12px 16px;
+            font-size: 13px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            min-width: 220px;
+            max-width: 320px;
+            animation: toast-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes toast-in {
+            from {
+                transform: translateY(16px) scale(0.95);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateY(0) scale(1);
+                opacity: 1;
+            }
+        }
+
+        .toast-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        .toast.success .toast-icon::before {
+            content: '✅';
+        }
+
+        .toast.error .toast-icon::before {
+            content: '❌';
+        }
+
+        .toast.info .toast-icon::before {
+            content: 'ℹ️';
+        }
+
+        /* ── Leaflet overrides ───────────────────────────── */
+        .leaflet-container {
+            font-family: var(--font);
+        }
+
+        .leaflet-bar a,
+        .leaflet-bar a:hover {
+            background: rgba(255, 255, 255, 0.82) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--c-border) !important;
+            border-radius: 10px !important;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+            color: var(--c-text) !important;
+            width: 32px !important;
+            height: 32px !important;
+            line-height: 32px !important;
+        }
+
+        .leaflet-bar {
+            border: none !important;
+            box-shadow: none !important;
+        }
+
+        .leaflet-popup-content-wrapper {
+            border-radius: 12px;
+            background: rgba(255, 255, 255, 0.94);
+            backdrop-filter: blur(16px);
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.14);
+            border: 1px solid var(--c-border);
+        }
+
+        .leaflet-popup-content {
+            margin: 8px 10px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+
+        .leaflet-popup-tip-container {
+            display: none;
+        }
+
+        /* Custom marker */
+        .a-marker-wrap {
+            background: transparent !important;
+            border: none !important;
+        }
+
+        .a-marker-inner {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .a-marker-inner svg {
+            transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .a-marker-inner:hover svg {
+            transform: scale(1.2);
+        }
+
+        /* hidden file input */
+        #import-file {
+            display: none;
+        }
+
+        /* Confirm dialog */
+        #confirm-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            z-index: 9500;
+            background: rgba(0, 0, 0, 0.35);
+            backdrop-filter: blur(4px);
+            align-items: center;
+            justify-content: center;
+        }
+
+        #confirm-overlay.open {
+            display: flex;
+        }
+
+        #confirm-box {
+            background: rgba(255, 255, 255, 0.96);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
+            min-width: 280px;
+            max-width: 340px;
+            text-align: center;
+        }
+
+        #confirm-box h3 {
+            font-size: 16px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        #confirm-box p {
+            font-size: 13px;
+            color: var(--c-muted);
+            margin-bottom: 18px;
+            line-height: 1.5;
+        }
+
+        .confirm-btns {
+            display: flex;
+            gap: 8px;
+        }
+
+        .confirm-btns button {
+            flex: 1;
+        }
+
+        .pin-label-wrap { background: transparent !important; border: none !important; pointer-events: none; }
+        .pin-label-inner { display: flex; flex-direction: column; align-items: center; background: transparent; padding: 2px 0; white-space: nowrap; pointer-events: none; }
+        .pin-label-en { font-size: 12px; font-weight: 600; color: #ffffff; display: block; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; text-shadow: 0px 1px 3px rgba(0,0,0,0.9), 0px 0px 6px rgba(0,0,0,0.8), 1px 1px 0px rgba(0,0,0,0.9), -1px -1px 0px rgba(0,0,0,0.9); }
+        .pin-label-hi { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.88); display: block; font-family: 'Noto Sans Devanagari', sans-serif; text-shadow: 0px 1px 3px rgba(0,0,0,0.9), 1px 1px 0px rgba(0,0,0,0.9), -1px -1px 0px rgba(0,0,0,0.9); }
+    </style>
+</head>
+
+<body>
+
+    <!-- ── Navbar ────────────────────────────────────────────── -->
+    <header class="navbar">
+        <div class="nav-left">
+            <span class="nav-title">⚙️ Admin Terminal</span>
+            <span class="badge-admin">Admin Mode</span>
+        </div>
+        <div class="nav-right">
+            <a href="index.html" class="btn-back">← Back to Map</a>
+        </div>
+    </header>
+
+    <!-- ── Main Layout ───────────────────────────────────────── -->
+    <div class="layout">
+
+        <!-- ── Left Panel ──────────────────────────────────────── -->
+        <div class="panel">
+            <div class="panel-scroll">
+
+                <!-- Add / Edit Pin Form -->
+                <div>
+                    <div class="section-title" id="form-section-label">Add New Pin</div>
+                    <div class="card">
+
+                        <!-- Drop-mode bar -->
+                        <div id="drop-mode-bar">
+                            <div class="ping"></div>
+                            Click on the map to place pin…
+                        </div>
+
+                        <!-- Coordinate readout -->
+                        <div class="coord-display">
+                            <span>Lat: <span id="coord-lat">—</span></span>
+                            <span>Lng: <span id="coord-lng">—</span></span>
+                        </div>
+
+                        <!-- Names -->
+                        <div>
+                            <label>Name (English)</label>
+                            <input type="text" id="f-nameEn" placeholder="e.g. Main Gate" />
+                        </div>
+                        <div>
+                            <label>Name (Hindi)</label>
+                            <input type="text" id="f-nameHi" placeholder="e.g. मुख्य द्वार" />
+                        </div>
+
+                        <!-- Category -->
+                        <div>
+                            <label>Category</label>
+                            <select id="f-category">
+                                <option value="academic">🔵 Academic</option>
+                                <option value="lab">🟠 Laboratory</option>
+                                <option value="admin">🔴 Administration</option>
+                                <option value="library">🟣 Library</option>
+                                <option value="canteen">🟡 Canteen</option>
+                                <option value="hostel">🟢 Hostel</option>
+                                <option value="sports">🌲 Sports</option>
+                                <option value="parking">⚫ Parking</option>
+                                <option value="washroom">🔵 Washroom</option>
+                                <option value="washroom_girls">♀ Girls Washroom</option>
+                                <option value="classroom">🖥 Classroom</option>
+                                <option value="college">🏛 College</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label>Visibility Tier</label>
+                            <div id="f-tier-group" style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+                                <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                                    <input type="checkbox" value="0" class="tier-checkbox"> Tier 0 — overview (zoom 16-17)
+                                </label>
+                                <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                                    <input type="checkbox" value="1" class="tier-checkbox"> Tier 1 — major landmark (zoom 18)
+                                </label>
+                                <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                                    <input type="checkbox" value="2" class="tier-checkbox"> Tier 2 — secondary (zoom 19-20)
+                                </label>
+                                <label style="display:flex; align-items:center; gap:8px; font-size:13px;">
+                                    <input type="checkbox" value="3" class="tier-checkbox"> Tier 3 — detailed (zoom 21+)
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- Floor & Block -->
+                        <div class="row-2">
+                            <div>
+                                <label>Floor</label>
+                                <input type="text" id="f-floor" placeholder="Ground / First" />
+                            </div>
+                            <div>
+                                <label>Block</label>
+                                <input type="text" id="f-block" placeholder="A-Wing, Main" />
+                            </div>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label>Description</label>
+                            <textarea id="f-description" placeholder="Brief description of this location…"></textarea>
+                        </div>
+
+                        <!-- Indoor Location Toggle -->
+                        <div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:12px;background:rgba(0,122,255,0.06);border:1px solid rgba(0,122,255,0.15);">
+                            <input type="checkbox" id="f-is-indoor"
+                                style="width:18px;height:18px;accent-color:var(--c-blue);cursor:pointer;flex-shrink:0;" />
+                            <div>
+                                <label for="f-is-indoor" style="margin:0;font-size:13px;font-weight:600;color:var(--c-text);cursor:pointer;">🏠 Indoor Location</label>
+                                <div style="font-size:11px;color:var(--c-subtle);margin-top:1px;">Enable for rooms, corridors & spaces inside a building</div>
+                            </div>
+                        </div>
+
+                        <!-- Tier removed -->
+
+                        <!-- BUG 4: Image upload -->
+                        <div>
+                            <label>Photos (max 5)</label>
+                            <div id="photos-thumb-container"
+                                style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px;"></div>
+                            <input type="file" id="f-photo-input" accept="image/*" style="display:none;" />
+                            <button type="button" id="btn-upload-photo"
+                                style="width:100%;padding:9px 12px;border-radius:12px;border:1px dashed rgba(0,122,255,0.4);background:rgba(0,122,255,0.05);font-family:var(--font);font-size:13px;font-weight:500;color:var(--c-blue);cursor:pointer;">📷
+                                Add Photo</button>
+                        </div>
+
+                        <!-- Action Buttons (context-aware) -->
+                        <button class="btn btn-blue" id="btn-drop-pin">📍 Drop Pin on Map</button>
+                        <div id="save-cancel-row" style="display:none; flex-direction:column; gap:8px;">
+                            <button class="btn btn-green" id="btn-save-pin">✓ Save Pin</button>
+                            <button class="btn btn-ghost" id="btn-cancel">Cancel</button>
+                        </div>
+                        <button class="btn btn-ghost" id="btn-new-pin" style="display:none;">+ New Pin</button>
+                    </div>
+                </div>
+
+                <!-- Pins List -->
+                <div>
+                    <div class="section-title">All Pins <span id="pin-count-label"
+                            style="font-weight:400;text-transform:none;letter-spacing:0;">(0)</span></div>
+                    <div class="card" style="padding: 10px;">
+                        <div id="pin-list" class="pin-list">
+                            <div class="pin-count" id="empty-msg">No pins saved yet.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BUG 1: Tier Zoom Settings removed -->
+
+                <!-- Export / Import -->
+                <div>
+                    <div class="section-title">Data</div>
+                    <div class="card">
+                        <button class="btn btn-ghost" id="btn-path-builder" style="font-size:13px;">🧭 Path Builder</button>
+                        <div class="io-row">
+                            <button class="btn btn-ghost" id="btn-export" style="font-size:13px;">⬇ Export JSON</button>
+                            <button class="btn btn-ghost" id="btn-import-trigger" style="font-size:13px;">⬆ Import
+                                JSON</button>
+                        </div>
+                        <input type="file" id="import-file" accept=".json" />
+                    </div>
+                </div>
+
+            </div><!-- /panel-scroll -->
+        </div><!-- /panel -->
+
+        <!-- ── Map ─────────────────────────────────────────────── -->
+        <div id="map"></div>
+
+    </div><!-- /layout -->
+
+    <!-- ── Context Menu ──────────────────────────────────────── -->
+    <div id="ctx-menu">
+        <div class="ctx-item" id="ctx-edit">✏️ Edit Pin</div>
+        <div class="ctx-item" id="ctx-fly">🎯 Fly to Pin</div>
+        <div class="ctx-item" id="ctx-copy">📋 Copy Coordinates</div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item danger" id="ctx-delete">🗑 Delete Pin</div>
+    </div>
+
+    <!-- ── Drag Coordinate Tooltip ───────────────────────────── -->
+    <div id="drag-tooltip"></div>
+
+    <!-- ── Toast Container ───────────────────────────────────── -->
+    <div id="toast-container"></div>
+
+    <!-- ── Confirm Dialog ────────────────────────────────────── -->
+    <div id="confirm-overlay">
+        <div id="confirm-box">
+            <h3 id="confirm-title">Delete Pin?</h3>
+            <p id="confirm-msg">This action cannot be undone.</p>
+            <div class="confirm-btns">
+                <button class="btn btn-ghost" id="confirm-no">Cancel</button>
+                <button class="btn btn-red" id="confirm-yes">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Scripts ───────────────────────────────────────────── -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+    <!-- BUG 8: Leaflet Rotate plugin -->
+    <script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
+    <script src="js/locations.js"></script>
+    <script src="js/adminmap.js"></script>
+    <script>
+        /* ====================================================
+           Admin Terminal — Smart Campus Navigator
+           ==================================================== */
+
+        const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2FsbW9uMjMxIiwiYSI6ImNtbTM1MDRhdjBkZHgycHIzN3hkaTU1MGUifQ.2RR52XcJr8gwvHKhgoQRFA';
+        const LS_KEY = 'campusPins';
+
+
+
+        // ── State ─────────────────────────────────────────────────
+        let map;
+        let adminMarkers = {};        // id → { marker, pin }
+        let dropTempMarker = null;
+        let dropMode = false;
+        let editingId = null;         // id of pin being edited (or null for new)
+        let ctxTargetId = null;
+        let tempLat = null, tempLng = null;
+
+        // ── Load / Save pins ──────────────────────────────────────
+        function loadPins() {
+            try {
+                const raw = localStorage.getItem(LS_KEY);
+                if (raw) return JSON.parse(raw);
+            } catch (_) { }
+            // Fall back to defaults from locations.js
+            return CAMPUS_LOCATIONS.map(l => ({ ...l, id: l.id || ('loc_' + Date.now() + Math.random()) }));
+        }
+
+        function savePins(pins) {
+            localStorage.setItem(LS_KEY, JSON.stringify(pins));
+        }
+
+        function getPins() {
+            return loadPins();
+        }
+
+        // ── Map init — BUG 8: Rotate support ─────────────────────
+        function initMap() {
+            const mapOpts = {
+                center: [26.1923, 78.1743],
+                zoom: 18, minZoom: 16, maxZoom: 22,
+                zoomControl: true,
+            };
+            if (typeof L.Map.prototype.setBearing !== 'undefined') {
+                mapOpts.rotate = true;
+                mapOpts.touchRotate = true;
+                mapOpts.rotateControl = { closeOnZeroBearing: false, position: 'topleft' };
+            }
+            map = L.map('map', mapOpts);
+
+            L.tileLayer(
+                `https://api.mapbox.com/styles/v1/mapbox/satellite-streets-v12/tiles/{z}/{x}/{y}?access_token=${MAPBOX_TOKEN}`,
+                {
+                    tileSize: 512, zoomOffset: -1,
+                    maxNativeZoom: 19, maxZoom: 22, minZoom: 16,
+                    attribution: '© <a href="https://www.mapbox.com/" target="_blank">Mapbox</a> © <a href="https://www.openstreetmap.org/" target="_blank">OpenStreetMap</a>',
+                }
+            ).addTo(map);
+
+            // Map click → drop pin
+            map.on('click', onMapClick);
+
+            // Close context menu on map click
+            map.on('click', closeCtxMenu);
+
+            map.on('zoomend', updateAdminTierVisibility);
+        }
+
+        // ── Render all pins on map ────────────────────────────────
+        function renderAllMarkers() {
+            // Remove existing
+            Object.values(adminMarkers).forEach(({ marker, labelMarker }) => { 
+                marker.remove(); 
+                if (labelMarker) labelMarker.remove(); 
+            });
+            adminMarkers = {};
+
+            const pins = getPins();
+            pins.forEach(pin => addMarkerToMap(pin));
+            updateAdminTierVisibility();
+
+            renderPinList();
+        }
+
+        function updateAdminTierVisibility() {
+          const z = map.getZoom();
+          Object.values(adminMarkers).forEach(function(entry) {
+            const visibleTiers = Array.isArray(entry.pin.visibleTiers)
+              ? entry.pin.visibleTiers
+              : [parseInt(entry.pin.tier, 10) || 1];
+
+            let show = false;
+            if (visibleTiers.includes(0) && z >= 16 && z < 18) show = true;
+            if (visibleTiers.includes(1) && z >= 18 && z < 19) show = true;
+            if (visibleTiers.includes(2) && z >= 19 && z < 21) show = true;
+            if (visibleTiers.includes(3) && z >= 21) show = true;
+            if (show) {
+              if (!map.hasLayer(entry.marker)) entry.marker.addTo(map);
+              if (entry.labelMarker && !map.hasLayer(entry.labelMarker)) entry.labelMarker.addTo(map);
+            } else {
+              if (map.hasLayer(entry.marker)) entry.marker.remove();
+              if (entry.labelMarker && map.hasLayer(entry.labelMarker)) entry.labelMarker.remove();
+            }
+          });
+        }
+
+        function addMarkerToMap(pin) {
+            const marker = L.marker([pin.lat, pin.lng], {
+                icon: createMarkerIcon(pin.category),
+                draggable: true,
+            });
+
+            marker.on('click', function () {
+                editPin(pin.id);
+            });
+            marker.bindPopup(`<strong>${pin.nameEn}</strong>`);
+            marker.addTo(map);
+
+            const labelMarker = createLabelOverlay(pin);
+
+            marker.on('drag', (e) => {
+                const { lat, lng } = e.target.getLatLng();
+                showDragTooltip(lat, lng);
+            });
+
+            marker.on('dragend', (e) => {
+                const { lat, lng } = e.target.getLatLng();
+                hideDragTooltip();
+                updatePinCoords(pin.id, lat, lng);
+                toast('Pin position updated', 'success');
+            });
+
+            // Right-click context menu
+            marker.on('contextmenu', (e) => {
+                L.DomEvent.stopPropagation(e);
+                openCtxMenu(e.originalEvent.clientX, e.originalEvent.clientY, pin.id);
+            });
+
+            adminMarkers[pin.id] = { marker, pin, labelMarker };
+        }
+
+        // ── Pin drop mode ─────────────────────────────────────────
+        function enterDropMode() {
+            dropMode = true;
+            document.getElementById('map').classList.add('drop-mode');
+            document.getElementById('drop-mode-bar').classList.add('visible');
+            document.getElementById('btn-drop-pin').style.display = 'none';
+            document.getElementById('save-cancel-row').style.display = 'flex';
+            document.getElementById('btn-save-pin').disabled = true;
+            toast('Click anywhere on the map to place the pin', 'info');
+        }
+
+        function exitDropMode() {
+            dropMode = false;
+            document.getElementById('map').classList.remove('drop-mode');
+            document.getElementById('drop-mode-bar').classList.remove('visible');
+            document.getElementById('btn-drop-pin').style.display = '';
+            document.getElementById('save-cancel-row').style.display = 'none';
+            if (dropTempMarker) { dropTempMarker.remove(); dropTempMarker = null; }
+            tempLat = null; tempLng = null;
+            document.getElementById('coord-lat').textContent = '—';
+            document.getElementById('coord-lng').textContent = '—';
+        }
+
+        function onMapClick(e) {
+            if (!dropMode) return;
+            const { lat, lng } = e.latlng;
+            tempLat = lat; tempLng = lng;
+
+            document.getElementById('coord-lat').textContent = lat.toFixed(6);
+            document.getElementById('coord-lng').textContent = lng.toFixed(6);
+
+            // Place/move temp marker
+            if (dropTempMarker) {
+                dropTempMarker.setLatLng([lat, lng]);
+            } else {
+                dropTempMarker = L.marker([lat, lng], {
+                    icon: createMarkerIcon(document.getElementById('f-category').value || 'academic'),
+                    draggable: true,
+                    zIndexOffset: 1000,
+                }).addTo(map);
+
+                dropTempMarker.on('drag', (ev) => {
+                    const ll = ev.target.getLatLng();
+                    showDragTooltip(ll.lat, ll.lng);
+                });
+                dropTempMarker.on('dragend', (ev) => {
+                    const ll = ev.target.getLatLng();
+                    hideDragTooltip();
+                    tempLat = ll.lat; tempLng = ll.lng;
+                    document.getElementById('coord-lat').textContent = tempLat.toFixed(6);
+                    document.getElementById('coord-lng').textContent = tempLng.toFixed(6);
+                });
+            }
+
+            document.getElementById('btn-save-pin').disabled = false;
+        }
+
+        // ── BUG 4: Photo state ────────────────────────────────────
+        let currentPhotos = [];
+
+        function setupPhotoUpload() {
+            const input = document.getElementById('f-photo-input');
+            const btnUp = document.getElementById('btn-upload-photo');
+
+            btnUp.addEventListener('click', function () { input.click(); });
+
+            input.addEventListener('change', function () {
+                const file = input.files[0];
+                if (!file) return;
+                if (currentPhotos.length >= 5) {
+                    toast('Maximum 5 photos allowed', 'error');
+                    return;
+                }
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    currentPhotos.push(e.target.result);
+                    renderPhotoThumbs();
+                    input.value = '';
+                };
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function renderPhotoThumbs() {
+            const container = document.getElementById('photos-thumb-container');
+            const btnUp = document.getElementById('btn-upload-photo');
+            container.innerHTML = '';
+            currentPhotos.forEach(function (src, idx) {
+                const wrap = document.createElement('div');
+                wrap.style.cssText = 'position:relative;width:72px;height:72px;';
+                const img = document.createElement('img');
+                img.src = src;
+                img.style.cssText = 'width:72px;height:72px;object-fit:cover;border-radius:8px;display:block;';
+                const rm = document.createElement('button');
+                rm.textContent = '×';
+                rm.style.cssText = 'position:absolute;top:2px;right:2px;width:18px;height:18px;border-radius:50%;background:rgba(255,59,48,0.9);color:#fff;border:none;font-size:12px;cursor:pointer;line-height:1;padding:0;display:flex;align-items:center;justify-content:center;';
+                rm.addEventListener('click', function () {
+                    currentPhotos.splice(idx, 1);
+                    renderPhotoThumbs();
+                });
+                wrap.appendChild(img);
+                wrap.appendChild(rm);
+                container.appendChild(wrap);
+            });
+            btnUp.style.display = currentPhotos.length >= 5 ? 'none' : '';
+        }
+
+        function clearPhotoUI() {
+            currentPhotos = [];
+            renderPhotoThumbs();
+        }
+
+        // ── Save pin — BUG 2 + BUG 4 ─────────────────────────────
+        function savePin() {
+            const nameEn = document.getElementById('f-nameEn').value.trim();
+            const nameHi = document.getElementById('f-nameHi').value.trim();
+            const category = document.getElementById('f-category').value;
+            const floor = document.getElementById('f-floor').value.trim();
+            const block = document.getElementById('f-block').value.trim();
+            const description = document.getElementById('f-description').value.trim();
+            const is_indoor = document.getElementById('f-is-indoor').checked;
+
+            if (!nameEn) { toast('Please enter an English name', 'error'); return; }
+
+            let lat = tempLat, lng = tempLng;
+            const pins = getPins();
+
+            const checkedBoxes = document.querySelectorAll('.tier-checkbox:checked');
+            const visibleTiers = Array.from(checkedBoxes).map(cb => parseInt(cb.value, 10));
+            const finalTiers = visibleTiers.length > 0 ? visibleTiers : [1];
+
+            if (editingId) {
+                const idx = pins.findIndex(p => p.id === editingId);
+                if (idx !== -1) {
+                    if (lat === null) { lat = pins[idx].lat; lng = pins[idx].lng; }
+                    const { tier, ...pinWithoutTier } = pins[idx];
+                    pins[idx] = { ...pinWithoutTier, nameEn, nameHi, category, floor, block, description, photos: currentPhotos.slice(), visibleTiers: finalTiers, is_indoor };
+                    savePins(pins);
+                    toast(`"${nameEn}" updated`, 'success');
+                }
+            } else {
+                if (lat === null) { toast('Drop a pin on the map first', 'error'); return; }
+                const newPin = {
+                    id: 'pin_' + Date.now(),
+                    nameEn, nameHi, category, lat, lng,
+                    floor, block, description, photos: currentPhotos.slice(),
+                    visibleTiers: finalTiers,
+                    is_indoor,
+                };
+                pins.push(newPin);
+                savePins(pins);
+                toast(`"${nameEn}" saved`, 'success');
+            }
+
+            resetForm();
+            renderAllMarkers();   // BUG 2: always refresh list
+        }
+
+        // ── Update pin coords after drag ──────────────────────────
+        function updatePinCoords(id, lat, lng) {
+            const pins = getPins();
+            const idx = pins.findIndex(p => p.id === id);
+            if (idx !== -1) { pins[idx].lat = lat; pins[idx].lng = lng; savePins(pins); }
+        }
+
+        // ── Delete pin — BUG 3 ────────────────────────────────────
+        function deletePin(id) {
+            const rawData = localStorage.getItem('campusPins');
+            let pins = rawData ? JSON.parse(rawData) : [];
+            pins = pins.filter(function (p) { return p.id !== id; });
+            localStorage.setItem('campusPins', JSON.stringify(pins));
+
+            if (adminMarkers[id]) {
+                adminMarkers[id].marker.remove();
+                delete adminMarkers[id];
+            }
+
+            if (editingId === id) {
+                editingId = null;
+                document.getElementById('form-section-label').textContent = 'Add New Pin';
+                document.getElementById('btn-drop-pin').style.display = '';
+                document.getElementById('save-cancel-row').style.display = 'none';
+                document.getElementById('btn-new-pin').style.display = 'none';
+            }
+
+            renderPinList();
+            toast('Pin deleted', 'success');
+        }
+
+        // ── Edit pin — BUG 4 photo load ───────────────────────────
+        function editPin(id) {
+            const pins = getPins();
+            const pin = pins.find(p => p.id === id);
+            if (!pin) return;
+
+            editingId = id;
+            document.getElementById('form-section-label').textContent = 'Edit Pin';
+            document.getElementById('f-nameEn').value = pin.nameEn || '';
+            document.getElementById('f-nameHi').value = pin.nameHi || '';
+            document.getElementById('f-category').value = pin.category || 'academic';
+            const tiers = Array.isArray(pin.visibleTiers) ? pin.visibleTiers : [pin.tier || 1];
+            document.querySelectorAll('.tier-checkbox').forEach(cb => {
+                cb.checked = tiers.includes(parseInt(cb.value, 10));
+            });
+            document.getElementById('f-floor').value = pin.floor || '';
+            document.getElementById('f-block').value = pin.block || '';
+            document.getElementById('f-description').value = pin.description || '';
+            document.getElementById('f-is-indoor').checked = pin.is_indoor === true;
+            currentPhotos = Array.isArray(pin.photos) ? pin.photos.slice() : (pin.photo ? [pin.photo] : []);
+            renderPhotoThumbs();
+            document.getElementById('coord-lat').textContent = pin.lat.toFixed(6);
+            document.getElementById('coord-lng').textContent = pin.lng.toFixed(6);
+
+            // Show edit action buttons
+            document.getElementById('btn-drop-pin').style.display = 'none';
+            document.getElementById('save-cancel-row').style.display = 'flex';
+            document.getElementById('btn-save-pin').disabled = false;
+            document.getElementById('btn-new-pin').style.display = '';
+
+            // Fly to
+            map.flyTo([pin.lat, pin.lng], 19, { duration: 0.8 });
+
+            closeCtxMenu();
+        }
+
+        // ── Reset form — BUG 3 clears photo too ──────────────────
+        function resetForm() {
+            editingId = null;
+            dropMode = false;
+            document.getElementById('map').classList.remove('drop-mode');
+            document.getElementById('drop-mode-bar').classList.remove('visible');
+            document.getElementById('form-section-label').textContent = 'Add New Pin';
+            document.getElementById('f-nameEn').value = '';
+            document.getElementById('f-nameHi').value = '';
+            document.getElementById('f-category').value = 'academic';
+            document.querySelectorAll('.tier-checkbox').forEach(cb => {
+                cb.checked = parseInt(cb.value, 10) === 1;
+            });
+            document.getElementById('f-floor').value = '';
+            document.getElementById('f-block').value = '';
+            document.getElementById('f-description').value = '';
+            document.getElementById('f-is-indoor').checked = false;
+            clearPhotoUI();   // BUG 3 + 4
+            document.getElementById('coord-lat').textContent = '—';
+            document.getElementById('coord-lng').textContent = '—';
+            document.getElementById('btn-drop-pin').style.display = '';
+            document.getElementById('save-cancel-row').style.display = 'none';
+            document.getElementById('btn-new-pin').style.display = 'none';
+            if (dropTempMarker) { dropTempMarker.remove(); dropTempMarker = null; }
+            tempLat = null; tempLng = null;
+        }
+
+
+
+        // ── BUG 2: refreshPinList = alias for renderPinList ───────
+        // Render pin list — BUG 2
+        function refreshPinList() { renderPinList(); }
+
+        function renderPinList() {
+            const rawData = localStorage.getItem('campusPins');
+            const pins = rawData ? JSON.parse(rawData) : [];
+            const list = document.getElementById('pin-list');
+            const countLabel = document.getElementById('pin-count-label');
+
+            if (countLabel) countLabel.textContent = '(' + pins.length + ')';
+
+            while (list.firstChild) {
+                list.removeChild(list.firstChild);
+            }
+
+            if (pins.length === 0) {
+                const emptyDiv = document.createElement('div');
+                emptyDiv.className = 'pin-count';
+                emptyDiv.textContent = 'No pins saved yet.';
+                list.appendChild(emptyDiv);
+                return;
+            }
+
+            pins.forEach(function (pin) {
+                const color = categoryColors[pin.category] || '#757575';
+                const item = document.createElement('div');
+                item.className = 'pin-item';
+
+                const dot = document.createElement('span');
+                dot.className = 'pin-dot';
+                dot.style.background = color;
+
+                const info = document.createElement('div');
+                info.className = 'pin-info';
+
+                const name = document.createElement('div');
+                name.className = 'pin-name';
+                name.textContent = pin.nameEn || 'Unnamed';
+
+                const badge = document.createElement('span');
+                badge.className = 'pin-cat-badge';
+                badge.textContent = pin.category || '';
+
+                info.appendChild(name);
+                info.appendChild(badge);
+
+                const actions = document.createElement('div');
+                actions.className = 'pin-actions';
+
+                const editBtn = document.createElement('button');
+                editBtn.className = 'btn-sm btn-sm-blue';
+                editBtn.textContent = '✏️';
+
+                const delBtn = document.createElement('button');
+                delBtn.className = 'btn-sm btn-sm-red';
+                delBtn.textContent = '🗑';
+
+                editBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    editPin(pin.id);
+                });
+
+                delBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    confirmDelete(pin.id);
+                });
+
+                actions.appendChild(editBtn);
+                actions.appendChild(delBtn);
+                item.appendChild(dot);
+                item.appendChild(info);
+                item.appendChild(actions);
+                list.appendChild(item);
+            });
+        }
+
+        // ── Confirm delete ────────────────────────────────────────
+        function confirmDelete(id) {
+            const rawData = localStorage.getItem('campusPins');
+            const pins = rawData ? JSON.parse(rawData) : [];
+            const pin = pins.find(function (p) { return p.id === id; });
+            const name = pin ? pin.nameEn : 'this pin';
+
+            document.getElementById('confirm-title').textContent = 'Delete Pin?';
+            document.getElementById('confirm-msg').textContent = '"' + name + '" will be permanently removed.';
+
+            const overlay = document.getElementById('confirm-overlay');
+            overlay.classList.add('open');
+
+            const oldYes = document.getElementById('confirm-yes');
+            const oldNo = document.getElementById('confirm-no');
+            const newYes = oldYes.cloneNode(true);
+            const newNo = oldNo.cloneNode(true);
+            oldYes.parentNode.replaceChild(newYes, oldYes);
+            oldNo.parentNode.replaceChild(newNo, oldNo);
+
+            newYes.addEventListener('click', function () {
+                overlay.classList.remove('open');
+                deletePin(id);
+            });
+
+            newNo.addEventListener('click', function () {
+                overlay.classList.remove('open');
+            });
+        }
+
+        // ── Context menu ──────────────────────────────────────────
+        function openCtxMenu(x, y, id) {
+            ctxTargetId = id;
+            const menu = document.getElementById('ctx-menu');
+            menu.style.left = x + 'px';
+            menu.style.top = y + 'px';
+            menu.classList.add('open');
+
+            // Adjust if off-screen
+            requestAnimationFrame(() => {
+                const r = menu.getBoundingClientRect();
+                if (r.right > window.innerWidth) menu.style.left = (x - r.width) + 'px';
+                if (r.bottom > window.innerHeight) menu.style.top = (y - r.height) + 'px';
+            });
+        }
+
+        function closeCtxMenu() {
+            document.getElementById('ctx-menu').classList.remove('open');
+            ctxTargetId = null;
+        }
+
+        // ── Drag tooltip ──────────────────────────────────────────
+        function showDragTooltip(lat, lng) {
+            const tt = document.getElementById('drag-tooltip');
+            tt.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+            tt.style.display = 'block';
+            document.addEventListener('mousemove', moveDragTooltip);
+        }
+
+        function moveDragTooltip(e) {
+            const tt = document.getElementById('drag-tooltip');
+            tt.style.left = (e.clientX + 14) + 'px';
+            tt.style.top = (e.clientY - 28) + 'px';
+        }
+
+        function hideDragTooltip() {
+            document.getElementById('drag-tooltip').style.display = 'none';
+            document.removeEventListener('mousemove', moveDragTooltip);
+        }
+
+        // ── Export / Import ───────────────────────────────────────
+        function exportPins() {
+            const pins = getPins();
+            const blob = new Blob([JSON.stringify(pins, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url; a.download = 'campus-pins.json'; a.click();
+            URL.revokeObjectURL(url);
+            toast(`Exported ${pins.length} pins`, 'success');
+        }
+
+        function importPins(file) {
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    if (!Array.isArray(data)) throw new Error('Not an array');
+                    savePins(data);
+                    renderAllMarkers();
+                    toast(`Imported ${data.length} pins`, 'success');
+                } catch (err) {
+                    toast('Invalid JSON file', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // ── Toast ─────────────────────────────────────────────────
+        function toast(msg, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const el = document.createElement('div');
+            el.className = `toast ${type}`;
+            el.innerHTML = `<span class="toast-icon"></span><span>${msg}</span>`;
+            container.appendChild(el);
+            setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.3s'; }, 2700);
+            setTimeout(() => el.remove(), 3000);
+        }
+
+        // ── Wire up events ────────────────────────────────────────
+        function setupEvents() {
+
+            // Drop pin
+            document.getElementById('btn-drop-pin').addEventListener('click', enterDropMode);
+
+            // Save
+            document.getElementById('btn-save-pin').addEventListener('click', savePin);
+
+            // Cancel / New
+            document.getElementById('btn-cancel').addEventListener('click', () => { exitDropMode(); resetForm(); });
+            document.getElementById('btn-new-pin').addEventListener('click', resetForm);
+
+            // Export
+            document.getElementById('btn-export').addEventListener('click', exportPins);
+
+            // Path builder
+            document.getElementById('btn-path-builder').addEventListener('click', () => {
+                window.location.href = 'path-builder.html';
+            });
+
+            // Import trigger
+            document.getElementById('btn-import-trigger').addEventListener('click', () =>
+                document.getElementById('import-file').click()
+            );
+            document.getElementById('import-file').addEventListener('change', (e) => importPins(e.target.files[0]));
+
+            // Context menu actions
+            document.getElementById('ctx-edit').addEventListener('click', () => {
+                if (ctxTargetId) editPin(ctxTargetId);
+            });
+            document.getElementById('ctx-fly').addEventListener('click', () => {
+                if (ctxTargetId && adminMarkers[ctxTargetId]) {
+                    const { lat, lng } = adminMarkers[ctxTargetId].marker.getLatLng();
+                    map.flyTo([lat, lng], 20, { duration: 0.8 });
+                }
+                closeCtxMenu();
+            });
+            document.getElementById('ctx-copy').addEventListener('click', () => {
+                if (ctxTargetId && adminMarkers[ctxTargetId]) {
+                    const { lat, lng } = adminMarkers[ctxTargetId].marker.getLatLng();
+                    navigator.clipboard.writeText(`${lat.toFixed(7)}, ${lng.toFixed(7)}`);
+                    toast('Coordinates copied', 'success');
+                }
+                closeCtxMenu();
+            });
+            document.getElementById('ctx-delete').addEventListener('click', () => {
+                if (ctxTargetId) confirmDelete(ctxTargetId);
+                closeCtxMenu();
+            });
+
+            // Close ctx menu on outside click
+            document.addEventListener('click', (e) => {
+                if (!document.getElementById('ctx-menu').contains(e.target)) closeCtxMenu();
+            });
+
+            // Update temp marker icon when category changes
+            document.getElementById('f-category').addEventListener('change', () => {
+                if (dropTempMarker) {
+                    dropTempMarker.setIcon(createMarkerIcon(document.getElementById('f-category').value));
+                }
+            });
+
+            // Confirm overlay escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeCtxMenu();
+                    document.getElementById('confirm-overlay').classList.remove('open');
+                    if (dropMode) { exitDropMode(); resetForm(); }
+                }
+            });
+
+
+            // BUG 4: Photo upload
+            setupPhotoUpload();
+        }
+
+        // ── Init ──────────────────────────────────────────────────
+        document.addEventListener('DOMContentLoaded', () => {
+
+            initMap();
+            renderAllMarkers();  // BUG 2: calls renderPinList on load
+            setupEvents();
+        });
+    </script>
+</body>
+
+</html>
