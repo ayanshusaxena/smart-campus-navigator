@@ -17,16 +17,12 @@ const CAMPUS_LOCATIONS = [
     "photo": null,
     "nearestNode": null,
     "photos": [],
-    "visibleTiers": [
-      1,
-      2,
-      3
-    ],
+    "visibleTiers": [1, 2, 3],
     "is_indoor": false
   },
   {
     "id": "pin_1776330964101",
-    "nameEn": "Girls hostel",
+    "nameEn": "Girls Hostel",
     "nameHi": "लड़कियों के छात्रावास",
     "category": "hostel",
     "lat": 26.193222030038065,
@@ -36,15 +32,11 @@ const CAMPUS_LOCATIONS = [
     "description": "",
     "photos": [],
     "is_indoor": false,
-    "visibleTiers": [
-      1,
-      2,
-      3
-    ]
+    "visibleTiers": [1, 2, 3]
   },
   {
     "id": "pin_1776492215150",
-    "nameEn": "Hostel mess",
+    "nameEn": "Hostel Mess",
     "nameHi": "छात्रावास मेस",
     "category": "canteen",
     "lat": 26.193088453973363,
@@ -54,11 +46,7 @@ const CAMPUS_LOCATIONS = [
     "description": "",
     "photos": [],
     "is_indoor": false,
-    "visibleTiers": [
-      1,
-      2,
-      3
-    ]
+    "visibleTiers": [1, 2, 3]
   },
   {
     "id": "pin_1776492452968",
@@ -72,29 +60,21 @@ const CAMPUS_LOCATIONS = [
     "description": "",
     "photos": [],
     "is_indoor": false,
-    "visibleTiers": [
-      1,
-      2,
-      3
-    ]
+    "visibleTiers": [1, 2, 3]
   },
   {
     "id": "pin_1776492494920",
-    "nameEn": "Boys hostel",
+    "nameEn": "Boys Hostel",
     "nameHi": "लड़कों का छात्रावास",
     "category": "hostel",
     "lat": 26.191330289871495,
     "lng": 78.17585706710817,
-    "floor": "",
+    "floor": "Ground",
     "block": "",
     "description": "",
     "photos": [],
     "is_indoor": false,
-    "visibleTiers": [
-      1,
-      2,
-      3
-    ]
+    "visibleTiers": [1, 2, 3]
   },
   {
     "id": "pin_1776763807012",
@@ -108,14 +88,11 @@ const CAMPUS_LOCATIONS = [
     "description": "",
     "photos": [],
     "is_indoor": true,
-    "visibleTiers": [
-      2,
-      3
-    ]
+    "visibleTiers": [2, 3]
   },
   {
     "id": "pin_1776763815453",
-    "nameEn": "Boys washroom",
+    "nameEn": "Boys Washroom",
     "nameHi": "लड़कों का शौचालय",
     "category": "washroom",
     "lat": 26.192294214749612,
@@ -124,8 +101,8 @@ const CAMPUS_LOCATIONS = [
     "block": "",
     "description": "",
     "photos": [],
-    "tier": 3,
-    "is_indoor": true
+    "is_indoor": true,
+    "visibleTiers": [3]
   },
   {
     "id": "pin_1776766323351",
@@ -139,15 +116,11 @@ const CAMPUS_LOCATIONS = [
     "description": "",
     "photos": [],
     "is_indoor": false,
-    "visibleTiers": [
-      1,
-      2,
-      3
-    ]
+    "visibleTiers": [1, 2, 3]
   },
   {
     "id": "pin_1776935865051",
-    "nameEn": "Back gate",
+    "nameEn": "Back Gate",
     "nameHi": "पीछला दरवाज़ा",
     "category": "admin",
     "lat": 26.192876657376555,
@@ -157,15 +130,11 @@ const CAMPUS_LOCATIONS = [
     "description": "",
     "photos": [],
     "is_indoor": false,
-    "visibleTiers": [
-      1,
-      2,
-      3
-    ]
+    "visibleTiers": [1, 2, 3]
   },
   {
     "id": "pin_1777010757958",
-    "nameEn": "Electrical engineering lab",
+    "nameEn": "Electrical Engineering Lab",
     "nameHi": "इलेक्ट्रिकल इंजीनियरिंग प्रयोगशाला",
     "category": "lab",
     "lat": 26.191465673060577,
@@ -174,12 +143,12 @@ const CAMPUS_LOCATIONS = [
     "block": "",
     "description": "",
     "photos": [],
-    "tier": 3,
-    "is_indoor": true
+    "is_indoor": true,
+    "visibleTiers": [3]
   },
   {
     "id": "pin_1777010773125",
-    "nameEn": "Enviromental lab",
+    "nameEn": "Environmental Lab",
     "nameHi": "पर्यावरण प्रयोगशाला",
     "category": "lab",
     "lat": 26.191506588837868,
@@ -188,13 +157,13 @@ const CAMPUS_LOCATIONS = [
     "block": "",
     "description": "",
     "photos": [],
-    "tier": 3,
-    "is_indoor": true
+    "is_indoor": true,
+    "visibleTiers": [3]
   },
   {
     "id": "pin_1777010806051",
     "nameEn": "FEEE Lab",
-    "nameHi": "",
+    "nameHi": "FEEE प्रयोगशाला",
     "category": "lab",
     "lat": 26.19173734151867,
     "lng": 78.17491091787817,
@@ -202,12 +171,12 @@ const CAMPUS_LOCATIONS = [
     "block": "",
     "description": "",
     "photos": [],
-    "tier": 3,
-    "is_indoor": true
+    "is_indoor": true,
+    "visibleTiers": [3]
   },
   {
     "id": "pin_1777010824267",
-    "nameEn": "IT HOD office",
+    "nameEn": "IT HOD Office",
     "nameHi": "आईटी विभागाध्यक्ष कार्यालय",
     "category": "admin",
     "lat": 26.19171658282165,
@@ -217,10 +186,7 @@ const CAMPUS_LOCATIONS = [
     "description": "",
     "photos": [],
     "is_indoor": true,
-    "visibleTiers": [
-      2,
-      3
-    ]
+    "visibleTiers": [2, 3]
   },
   {
     "id": "pin_1777010894974",
@@ -233,12 +199,12 @@ const CAMPUS_LOCATIONS = [
     "block": "",
     "description": "",
     "photos": [],
-    "tier": 3,
-    "is_indoor": true
+    "is_indoor": true,
+    "visibleTiers": [3]
   },
   {
     "id": "pin_1777010929085",
-    "nameEn": "Computer science lab",
+    "nameEn": "Computer Science Lab",
     "nameHi": "कंप्यूटर विज्ञान प्रयोगशाला",
     "category": "lab",
     "lat": 26.19167446371485,
@@ -247,8 +213,8 @@ const CAMPUS_LOCATIONS = [
     "block": "",
     "description": "",
     "photos": [],
-    "tier": 3,
-    "is_indoor": true
+    "is_indoor": true,
+    "visibleTiers": [3]
   },
   {
     "id": "pin_1777011017067",
@@ -262,14 +228,11 @@ const CAMPUS_LOCATIONS = [
     "description": "",
     "photos": [],
     "is_indoor": true,
-    "visibleTiers": [
-      2,
-      3
-    ]
+    "visibleTiers": [2, 3]
   },
   {
     "id": "pin_1777011043986",
-    "nameEn": "Boys washroom",
+    "nameEn": "Boys Washroom",
     "nameHi": "लड़कों का शौचालय",
     "category": "washroom",
     "lat": 26.191853770663894,
@@ -279,32 +242,13 @@ const CAMPUS_LOCATIONS = [
     "description": "",
     "photos": [],
     "is_indoor": true,
-    "visibleTiers": [
-      3
-    ]
-  },
-  {
-    "id": "pin_1777011123747",
-    "nameEn": "l",
-    "nameHi": "",
-    "category": "admin",
-    "lat": 26.191787583567198,
-    "lng": 78.17449651658536,
-    "floor": "",
-    "block": "",
-    "description": "",
-    "photos": [],
-    "is_indoor": true,
-    "visibleTiers": [
-      2,
-      3
-    ]
+    "visibleTiers": [3]
   },
   {
     "id": "pin_1777011160957",
-    "nameEn": "Soil mechanics lab",
+    "nameEn": "Soil Mechanics Lab",
     "nameHi": "मृदा यांत्रिकी प्रयोगशाला",
-    "category": "classroom",
+    "category": "lab",
     "lat": 26.191673862013214,
     "lng": 78.1745307147503,
     "floor": "",
@@ -312,14 +256,12 @@ const CAMPUS_LOCATIONS = [
     "description": "",
     "photos": [],
     "is_indoor": true,
-    "visibleTiers": [
-      3
-    ]
+    "visibleTiers": [3]
   },
   {
     "id": "pin_1777011227645",
-    "nameEn": "Confrence hall",
-    "nameHi": "",
+    "nameEn": "Conference Hall",
+    "nameHi": "सभागार",
     "category": "admin",
     "lat": 26.19173162535608,
     "lng": 78.17451395094396,
@@ -328,16 +270,13 @@ const CAMPUS_LOCATIONS = [
     "description": "",
     "photos": [],
     "is_indoor": true,
-    "visibleTiers": [
-      2,
-      3
-    ]
+    "visibleTiers": [2, 3]
   },
   {
     "id": "pin_1777011271308",
-    "nameEn": "Computer lab",
+    "nameEn": "Computer Lab",
     "nameHi": "कंप्यूटर लैब",
-    "category": "admin",
+    "category": "lab",
     "lat": 26.191517419482384,
     "lng": 78.1745769828558,
     "floor": "",
@@ -345,44 +284,7 @@ const CAMPUS_LOCATIONS = [
     "description": "",
     "photos": [],
     "is_indoor": true,
-    "visibleTiers": [
-      2,
-      3
-    ]
-  },
-  {
-    "id": "pin_1777011305155",
-    "nameEn": "io",
-    "nameHi": "",
-    "category": "admin",
-    "lat": 26.191769532534288,
-    "lng": 78.1750262528658,
-    "floor": "",
-    "block": "",
-    "description": "",
-    "photos": [],
-    "is_indoor": true,
-    "visibleTiers": [
-      2,
-      3
-    ]
-  },
-  {
-    "id": "pin_1777011315990",
-    "nameEn": "ui",
-    "nameHi": "",
-    "category": "admin",
-    "lat": 26.191788185268248,
-    "lng": 78.17511074244977,
-    "floor": "",
-    "block": "",
-    "description": "",
-    "photos": [],
-    "is_indoor": true,
-    "visibleTiers": [
-      2,
-      3
-    ]
+    "visibleTiers": [2, 3]
   },
   {
     "id": "pin_1777011349718",
@@ -396,10 +298,7 @@ const CAMPUS_LOCATIONS = [
     "description": "",
     "photos": [],
     "is_indoor": true,
-    "visibleTiers": [
-      2,
-      3
-    ]
+    "visibleTiers": [3]
   },
   {
     "id": "pin_1777011378747",
@@ -412,12 +311,12 @@ const CAMPUS_LOCATIONS = [
     "block": "",
     "description": "",
     "photos": [],
-    "tier": 3,
-    "is_indoor": true
+    "is_indoor": true,
+    "visibleTiers": [3]
   },
   {
     "id": "pin_1777011417299",
-    "nameEn": "IT - 1st Year class",
+    "nameEn": "IT - 1st Year Class",
     "nameHi": "आईटी - प्रथम वर्ष की कक्षा",
     "category": "classroom",
     "lat": 26.191953051238443,
@@ -426,25 +325,8 @@ const CAMPUS_LOCATIONS = [
     "block": "",
     "description": "",
     "photos": [],
-    "tier": 3,
-    "is_indoor": true
-  },
-  {
-    "id": "pin_1777011443125",
-    "nameEn": "hj",
-    "nameHi": "",
-    "category": "admin",
-    "lat": 26.191996373644468,
-    "lng": 78.17510135471822,
-    "floor": "",
-    "block": "",
-    "description": "",
-    "photos": [],
     "is_indoor": true,
-    "visibleTiers": [
-      2,
-      3
-    ]
+    "visibleTiers": [3]
   },
   {
     "id": "pin_1777011455542",
@@ -457,25 +339,8 @@ const CAMPUS_LOCATIONS = [
     "block": "",
     "description": "",
     "photos": [],
-    "tier": 3,
-    "is_indoor": true
-  },
-  {
-    "id": "pin_1777011475779",
-    "nameEn": "jv",
-    "nameHi": "",
-    "category": "admin",
-    "lat": 26.192009009343177,
-    "lng": 78.17495316267015,
-    "floor": "",
-    "block": "",
-    "description": "",
-    "photos": [],
     "is_indoor": true,
-    "visibleTiers": [
-      2,
-      3
-    ]
+    "visibleTiers": [3]
   },
   {
     "id": "pin_1777011518995",
@@ -488,25 +353,8 @@ const CAMPUS_LOCATIONS = [
     "block": "",
     "description": "",
     "photos": [],
-    "tier": 3,
-    "is_indoor": true
-  },
-  {
-    "id": "pin_1777011532195",
-    "nameEn": "uy",
-    "nameHi": "",
-    "category": "admin",
-    "lat": 26.19190371181197,
-    "lng": 78.17475266754627,
-    "floor": "",
-    "block": "",
-    "description": "",
-    "photos": [],
     "is_indoor": true,
-    "visibleTiers": [
-      2,
-      3
-    ]
+    "visibleTiers": [3]
   },
   {
     "id": "pin_1779429318067",
@@ -519,7 +367,7 @@ const CAMPUS_LOCATIONS = [
     "block": "",
     "description": "",
     "photos": [],
-    "tier": 3,
-    "is_indoor": false
+    "is_indoor": false,
+    "visibleTiers": [2, 3]
   }
 ]
