@@ -16,6 +16,13 @@
 
   <!-- App CSS -->
   <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="js/firebase.js"></script>
+  <script src="js/auth.js"></script>
 </head>
 
 <body>
@@ -40,7 +47,25 @@
 
     <div class="navbar-right">
       <button id="lang-toggle">EN / HI</button>
-      <a href="admin.html"><button id="admin-btn">Admin</button></a>
+      <!-- Auth button group -->
+      <div id="auth-controls" style="display:inline-flex; align-items:center; gap:8px;">
+        <span id="auth-user-info" style="display:none; font-size:12px; color:var(--color-text-secondary); max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+        
+        <button id="btn-login" onclick="showLoginModal()"
+          style="background:var(--color-accent); color:#fff; border:none; border-radius:8px; padding:6px 14px; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+          🔐 Login
+        </button>
+
+        <a id="btn-admin" href="admin.html"
+          style="display:none; background:var(--color-accent); color:#fff; border:none; border-radius:8px; padding:6px 14px; font-size:13px; cursor:pointer; text-decoration:none; align-items:center; gap:6px;">
+          ⚙️ Admin
+        </a>
+
+        <button id="btn-logout" onclick="signOut()"
+          style="display:none; background:transparent; color:var(--color-text-secondary); border:1px solid var(--color-border); border-radius:8px; padding:6px 12px; font-size:12px; cursor:pointer;">
+          Logout
+        </button>
+      </div>
     </div>
   </header>
 
@@ -132,6 +157,48 @@
     <button id="lightbox-close"
       style="position:fixed;top:20px;right:20px;width:40px;height:40px;border-radius:50%;border:none;background:rgba(255,255,255,0.2);color:#fff;font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
   </div>
+
+  <!-- Login Modal -->
+  <div id="login-modal" style="display:none; position:fixed; inset:0; z-index:9999;
+    background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">
+    <div style="background:var(--color-surface, #1e1e2e); border-radius:16px;
+      padding:32px 28px; width:300px; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+      
+      <div style="font-size:32px; margin-bottom:8px;">🗺️</div>
+      <h2 style="margin:0 0 4px; font-size:18px; color:var(--color-text);">Smart Campus Navigator</h2>
+      <p style="margin:0 0 24px; font-size:13px; color:var(--color-text-secondary);">
+        Dr. B.R. Ambedkar Polytechnic College
+      </p>
+
+      <button onclick="signInWithGoogle()"
+        style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--color-border);
+        background:var(--color-surface-2, #2a2a3e); color:var(--color-text);
+        font-size:14px; cursor:pointer; display:flex; align-items:center;
+        justify-content:center; gap:10px; margin-bottom:12px;">
+        <img src="https://www.google.com/favicon.ico" width="16" height="16">
+        Continue with Google
+      </button>
+
+      <p style="font-size:11px; color:var(--color-text-secondary); margin:0 0 16px;">
+        Student or Admin — same Google login.<br>Admin access granted automatically.
+      </p>
+
+      <button onclick="hideLoginModal()"
+        style="background:transparent; border:none; color:var(--color-text-secondary);
+        font-size:13px; cursor:pointer; text-decoration:underline;">
+        Continue without login
+      </button>
+    </div>
+  </div>
+
+  <script>
+  function showLoginModal() {
+    document.getElementById('login-modal').style.display = 'flex';
+  }
+  function hideLoginModal() {
+    document.getElementById('login-modal').style.display = 'none';
+  }
+  </script>
 
 </body>
 

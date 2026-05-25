@@ -773,9 +773,16 @@
         .pin-label-en { font-size: 12px; font-weight: 600; color: #ffffff; display: block; font-family: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif; text-shadow: 0px 1px 3px rgba(0,0,0,0.9), 0px 0px 6px rgba(0,0,0,0.8), 1px 1px 0px rgba(0,0,0,0.9), -1px -1px 0px rgba(0,0,0,0.9); }
         .pin-label-hi { font-size: 11px; font-weight: 500; color: rgba(255,255,255,0.88); display: block; font-family: 'Noto Sans Devanagari', sans-serif; text-shadow: 0px 1px 3px rgba(0,0,0,0.9), 1px 1px 0px rgba(0,0,0,0.9), -1px -1px 0px rgba(0,0,0,0.9); }
     </style>
+    <style>
+      body.auth-pending { visibility: hidden !important; }
+    </style>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="js/firebase.js"></script>
 </head>
 
-<body>
+<body class="auth-pending">
 
     <!-- ── Navbar ────────────────────────────────────────────── -->
     <header class="navbar">
@@ -979,6 +986,26 @@
     <script src="js/locations.js"></script>
     <script src="js/adminmap.js"></script>
     <script>
+        // Admin auth guard
+        firebase.auth().onAuthStateChanged(function(user) {
+          // Remove pending class — auth has resolved
+          document.body.classList.remove('auth-pending');
+
+          if (!user || user.email !== ADMIN_EMAIL) {
+            document.body.innerHTML = `
+              <div style="display:flex;flex-direction:column;align-items:center;
+                justify-content:center;height:100vh;gap:16px;font-family:sans-serif;
+                background:#111;color:#fff;">
+                <div style="font-size:48px;">🔒</div>
+                <h2>Admin Access Required</h2>
+                <p style="color:#aaa;">Please login with the authorized admin account.</p>
+                <a href="index.html" style="color:#4f9cf9;text-decoration:none;font-size:15px;">
+                  ← Back to Map
+                </a>
+              </div>`;
+          }
+        });
+
         /* ====================================================
            Admin Terminal — Smart Campus Navigator
            ==================================================== */
@@ -996,19 +1023,47 @@
         let editingId = null;         // id of pin being edited (or null for new)
         let ctxTargetId = null;
         let tempLat = null, tempLng = null;
+        let adminPinsCache = [];
 
         // ── Load / Save pins ──────────────────────────────────────
-        function loadPins() {
+        async function loadAdminPins() {
             try {
-                const raw = localStorage.getItem(LS_KEY);
-                if (raw) return JSON.parse(raw);
-            } catch (_) { }
-            // Fall back to defaults from locations.js
-            return CAMPUS_LOCATIONS.map(l => ({ ...l, id: l.id || ('loc_' + Date.now() + Math.random()) }));
+                const snapshot = await db.collection('campusPins').get();
+                if (!snapshot.empty) {
+                    const pins = [];
+                    snapshot.forEach(function(doc) { pins.push(doc.data()); });
+                    return pins;
+                }
+            } catch (err) {
+                console.warn('[CNS Admin] Firestore load failed, using localStorage:', err.message);
+            }
+            const raw = localStorage.getItem('campusPins');
+            return raw ? JSON.parse(raw) : [];
         }
 
-        function savePins(pins) {
+        function loadPins() {
+            return Array.isArray(adminPinsCache) ? adminPinsCache : [];
+        }
+
+        async function savePinsToFirestore(allPins) {
+            try {
+                const batch = db.batch();
+                allPins.forEach(function(pin) {
+                    const ref = db.collection('campusPins').doc(pin.id);
+                    batch.set(ref, pin);
+                });
+                await batch.commit();
+                console.log('[CNS Admin] Saved', allPins.length, 'pins to Firestore');
+            } catch (err) {
+                console.error('[CNS Admin] Firestore save failed:', err);
+                alert('Save failed: ' + err.message);
+            }
+        }
+
+        async function savePins(pins) {
+            adminPinsCache = pins;
             localStorage.setItem(LS_KEY, JSON.stringify(pins));
+            await savePinsToFirestore(pins);
         }
 
         function getPins() {
@@ -1233,7 +1288,7 @@
         }
 
         // ── Save pin — BUG 2 + BUG 4 ─────────────────────────────
-        function savePin() {
+        async function savePin() {
             const nameEn = document.getElementById('f-nameEn').value.trim();
             const nameHi = document.getElementById('f-nameHi').value.trim();
             const category = document.getElementById('f-category').value;
@@ -1257,7 +1312,7 @@
                     if (lat === null) { lat = pins[idx].lat; lng = pins[idx].lng; }
                     const { tier, ...pinWithoutTier } = pins[idx];
                     pins[idx] = { ...pinWithoutTier, nameEn, nameHi, category, floor, block, description, photos: currentPhotos.slice(), visibleTiers: finalTiers, is_indoor };
-                    savePins(pins);
+                    await savePins(pins);
                     toast(`"${nameEn}" updated`, 'success');
                 }
             } else {
@@ -1270,7 +1325,7 @@
                     is_indoor,
                 };
                 pins.push(newPin);
-                savePins(pins);
+                await savePins(pins);
                 toast(`"${nameEn}" saved`, 'success');
             }
 
@@ -1279,18 +1334,17 @@
         }
 
         // ── Update pin coords after drag ──────────────────────────
-        function updatePinCoords(id, lat, lng) {
+        async function updatePinCoords(id, lat, lng) {
             const pins = getPins();
             const idx = pins.findIndex(p => p.id === id);
-            if (idx !== -1) { pins[idx].lat = lat; pins[idx].lng = lng; savePins(pins); }
+            if (idx !== -1) { pins[idx].lat = lat; pins[idx].lng = lng; await savePins(pins); }
         }
 
         // ── Delete pin — BUG 3 ────────────────────────────────────
-        function deletePin(id) {
-            const rawData = localStorage.getItem('campusPins');
-            let pins = rawData ? JSON.parse(rawData) : [];
+        async function deletePin(id) {
+            let pins = getPins();
             pins = pins.filter(function (p) { return p.id !== id; });
-            localStorage.setItem('campusPins', JSON.stringify(pins));
+            await savePins(pins);
 
             if (adminMarkers[id]) {
                 adminMarkers[id].marker.remove();
@@ -1379,8 +1433,7 @@
         function refreshPinList() { renderPinList(); }
 
         function renderPinList() {
-            const rawData = localStorage.getItem('campusPins');
-            const pins = rawData ? JSON.parse(rawData) : [];
+            const pins = getPins();
             const list = document.getElementById('pin-list');
             const countLabel = document.getElementById('pin-count-label');
 
@@ -1453,8 +1506,7 @@
 
         // ── Confirm delete ────────────────────────────────────────
         function confirmDelete(id) {
-            const rawData = localStorage.getItem('campusPins');
-            const pins = rawData ? JSON.parse(rawData) : [];
+            const pins = getPins();
             const pin = pins.find(function (p) { return p.id === id; });
             const name = pin ? pin.nameEn : 'this pin';
 
@@ -1535,11 +1587,11 @@
         function importPins(file) {
             if (!file) return;
             const reader = new FileReader();
-            reader.onload = (e) => {
+            reader.onload = async (e) => {
                 try {
                     const data = JSON.parse(e.target.result);
                     if (!Array.isArray(data)) throw new Error('Not an array');
-                    savePins(data);
+                    await savePins(data);
                     renderAllMarkers();
                     toast(`Imported ${data.length} pins`, 'success');
                 } catch (err) {
@@ -1638,9 +1690,10 @@
         }
 
         // ── Init ──────────────────────────────────────────────────
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
 
             initMap();
+            adminPinsCache = await loadAdminPins();
             renderAllMarkers();  // BUG 2: calls renderPinList on load
             setupEvents();
         });

@@ -207,8 +207,15 @@
         -1px -1px 0px rgba(0,0,0,0.9);
     }
   </style>
+  <style>
+    body.auth-pending { visibility: hidden !important; }
+  </style>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="js/firebase.js"></script>
 </head>
-<body>
+<body class="auth-pending">
 
   <header class="navbar">
     <div class="navbar-title">Path Builder</div>
@@ -268,6 +275,24 @@
   <script src="js/locations.js"></script>
   <script src="js/routing.js"></script>
   <script>
+    firebase.auth().onAuthStateChanged(function(user) {
+      document.body.classList.remove('auth-pending');
+
+      if (!user || user.email !== ADMIN_EMAIL) {
+        document.body.innerHTML = `
+          <div style="display:flex;flex-direction:column;align-items:center;
+            justify-content:center;height:100vh;gap:16px;font-family:sans-serif;
+            background:#111;color:#fff;">
+            <div style="font-size:48px;">🔒</div>
+            <h2>Admin Access Required</h2>
+            <p style="color:#aaa;">Path Builder is only accessible to admins.</p>
+            <a href="index.html" style="color:#4f9cf9;text-decoration:none;font-size:15px;">
+              ← Back to Map
+            </a>
+          </div>`;
+      }
+    });
+
     const MAPBOX_TOKEN = 'pk.eyJ1Ijoic2FsbW9uMjMxIiwiYSI6ImNtbTM1MDRhdjBkZHgycHIzN3hkaTU1MGUifQ.2RR52XcJr8gwvHKhgoQRFA';
     const LS_GEOJSON = 'campusGeoJSON';
     const LS_BUILDING = 'campusBuildingGeoJSON';
