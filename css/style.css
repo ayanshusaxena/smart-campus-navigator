@@ -3,13 +3,57 @@
    ============================================================ */
 
 /* ── Design Tokens ─────────────────────────────────────────── */
+:root,
+[data-theme="dark"] {
+  --color-bg: #0f0f1a;
+  --color-surface: #1a1a2e;
+  --color-surface-2: #252540;
+  --color-border: rgba(255,255,255,0.08);
+  --color-text: #f0f0ff;
+  --color-text-secondary: #8888aa;
+  --color-accent: #4f9cf9;
+  --color-accent-hover: #3a8ae8;
+  --color-nav-bg: rgba(20,20,40,0.95);
+  --color-sidebar-bg: rgba(26,26,46,0.97);
+  --color-pin-label: #ffffff;
+  --color-shadow: rgba(0,0,0,0.5);
+}
+
+[data-theme="light"] {
+  --color-bg: #f4f6fb;
+  --color-surface: #ffffff;
+  --color-surface-2: #eef1f7;
+  --color-border: rgba(0,0,0,0.1);
+  --color-text: #1a1a2e;
+  --color-text-secondary: #5a6480;
+  --color-accent: #2563eb;
+  --color-accent-hover: #1d4ed8;
+  --color-nav-bg: rgba(255,255,255,0.97);
+  --color-sidebar-bg: rgba(244,246,251,0.98);
+  --color-pin-label: #1a1a2e;
+  --color-shadow: rgba(0,0,0,0.12);
+}
+
+[data-theme="midnight"] {
+  --color-bg: #000008;
+  --color-surface: #0a0a18;
+  --color-surface-2: #0f0f22;
+  --color-border: rgba(100,100,255,0.1);
+  --color-text: #c8d8ff;
+  --color-text-secondary: #5060a0;
+  --color-accent: #7c5cfc;
+  --color-accent-hover: #6a4ae8;
+  --color-nav-bg: rgba(5,5,20,0.98);
+  --color-sidebar-bg: rgba(8,8,24,0.98);
+  --color-pin-label: #c8d8ff;
+  --color-shadow: rgba(0,0,80,0.5);
+}
+
 :root {
   --font-apple: -apple-system, BlinkMacSystemFont, 'Inter', 'SF Pro Display', sans-serif;
-  --color-text: #1c1c1e;
-  --color-muted: #3a3a3c;
-  --color-subtle: #6b6b6e;
-  --color-primary: #007AFF;
-  --color-border: rgba(0, 0, 0, 0.08);
+  --color-muted: var(--color-text-secondary);
+  --color-subtle: var(--color-text-secondary);
+  --color-primary: var(--color-accent);
   --color-border-hi: rgba(255, 255, 255, 0.50);
   --transition-std: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   --navbar-height: 56px;
@@ -37,7 +81,7 @@ body {
 body {
   font-family: var(--font-apple);
   color: var(--color-text);
-  background: #000;
+  background: var(--color-bg);
 }
 
 /* ── Map ───────────────────────────────────────────────────── */
@@ -686,6 +730,12 @@ body {
     top: auto;
     bottom: 80px;
     left: 16px;
+  }
+}
+
+@media (max-width: 768px) {
+  .leaflet-control-rotate {
+    display: none !important;
   }
 }
 
