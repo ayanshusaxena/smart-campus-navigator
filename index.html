@@ -360,6 +360,44 @@
         Continue with Google
       </button>
 
+      <div style="margin-top:18px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1);">
+        <p style="font-size:11px; color:var(--color-text-secondary);
+                  text-align:center; margin:0 0 12px; letter-spacing:0.5px;
+                  text-transform:uppercase;">Admin Login</p>
+
+        <input  id="admin-email-input"
+                type="email"
+                placeholder="Admin email"
+                autocomplete="username"
+                style="width:100%; box-sizing:border-box; padding:9px 12px;
+                       border-radius:8px; border:1px solid rgba(255,255,255,0.15);
+                       background:rgba(255,255,255,0.07); color:var(--color-text-primary);
+                       font-size:14px; font-family:inherit; outline:none;
+                       margin-bottom:8px;" />
+
+        <input  id="admin-pass-input"
+                type="password"
+                placeholder="Password"
+                autocomplete="current-password"
+                style="width:100%; box-sizing:border-box; padding:9px 12px;
+                       border-radius:8px; border:1px solid rgba(255,255,255,0.15);
+                       background:rgba(255,255,255,0.07); color:var(--color-text-primary);
+                       font-size:14px; font-family:inherit; outline:none;
+                       margin-bottom:8px;" />
+
+        <p id="admin-login-error"
+           style="color:#f87171; font-size:12px; min-height:16px;
+                  margin:0 0 8px; text-align:center;"></p>
+
+        <button onclick="signInWithEmailPassword()"
+                style="width:100%; padding:10px; border-radius:8px; border:none;
+                       background:var(--color-accent, #4f9cf9); color:#fff;
+                       font-size:14px; font-weight:600; font-family:inherit;
+                       cursor:pointer; letter-spacing:0.2px;">
+          Sign in as Admin
+        </button>
+      </div>
+
       <p style="font-size:11px; color:var(--color-text-secondary); margin:0 0 16px;">
         Student or Admin — same Google login.<br>Admin access granted automatically.
       </p>
