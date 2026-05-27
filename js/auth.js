@@ -25,8 +25,6 @@ auth.onAuthStateChanged(function(user) {
 
 function updateAuthUI(user) {
   const loginBtn   = document.getElementById('btn-login');
-  const logoutBtn  = document.getElementById('btn-logout');
-  const adminBtn   = document.getElementById('btn-admin');
   const userInfo   = document.getElementById('auth-user-info');
 
   if (!loginBtn) return; // not on index.html
@@ -34,8 +32,6 @@ function updateAuthUI(user) {
   if (!user) {
     // Logged out state
     loginBtn.style.display  = 'inline-flex';
-    logoutBtn.style.display = 'none';
-    if (adminBtn) adminBtn.style.display = 'none';
     if (userInfo) userInfo.style.display = 'none';
   } else {
     // Logged in state
@@ -43,13 +39,9 @@ function updateAuthUI(user) {
     // Hide login modal if open
     const modal = document.getElementById('login-modal');
     if (modal) modal.style.display = 'none';
-    logoutBtn.style.display = 'inline-flex';
     if (userInfo) {
       userInfo.style.display = 'inline-flex';
       userInfo.textContent   = user.displayName || user.email;
-    }
-    if (adminBtn) {
-      adminBtn.style.display = window.__CNS_isAdmin ? 'inline-flex' : 'none';
     }
   }
 
