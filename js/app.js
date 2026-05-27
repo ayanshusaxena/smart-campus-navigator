@@ -1257,7 +1257,8 @@ async function submitReport() {
       document.getElementById('report-status').textContent = '';
     }, 2000);
   } catch (err) {
-    status.textContent = '❌ Failed: ' + err.message;
+    status.textContent = '❌ Submission failed. Please try again.';
+    console.error('[CNS] Report submission error:', err);
     status.style.color = '#f87171';
   }
 }
