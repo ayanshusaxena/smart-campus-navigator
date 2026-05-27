@@ -1244,6 +1244,14 @@
             input.addEventListener('change', function () {
                 const file = input.files[0];
                 if (!file) return;
+                if (!file.type.startsWith('image/')) {
+                    toast('Only image files are allowed', 'error');
+                    return;
+                }
+                if (file.size > 2 * 1024 * 1024) {
+                    toast('Image must be under 2MB', 'error');
+                    return;
+                }
                 if (currentPhotos.length >= 5) {
                     toast('Maximum 5 photos allowed', 'error');
                     return;
