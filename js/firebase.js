@@ -10,7 +10,7 @@ const FIREBASE_CONFIG = {
   appId: "1:957937112548:web:029fb6b0856678d5a423f1"
 };
 
-const ADMIN_EMAIL = "cricorts.com@gmail.com";
+const ADMIN_EMAIL = "admin@gmail.com";
 
 // Initialize Firebase app
 firebase.initializeApp(FIREBASE_CONFIG);
