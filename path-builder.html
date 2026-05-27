@@ -467,8 +467,14 @@
       toSel.innerHTML = '<option value="">Select Destination...</option>';
       
       thePins.forEach(pin => {
-        fromSel.innerHTML += `<option value="${pin.id}">${pin.nameEn}</option>`;
-        toSel.innerHTML += `<option value="${pin.id}">${pin.nameEn}</option>`;
+        const fromOpt = document.createElement('option');
+        fromOpt.value = pin.id;
+        fromOpt.textContent = pin.nameEn;
+        fromSel.appendChild(fromOpt);
+        const toOpt = document.createElement('option');
+        toOpt.value = pin.id;
+        toOpt.textContent = pin.nameEn;
+        toSel.appendChild(toOpt);
       });
     }
 
