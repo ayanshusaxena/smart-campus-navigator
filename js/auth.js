@@ -52,4 +52,25 @@ function updateAuthUI(user) {
       adminBtn.style.display = window.__CNS_isAdmin ? 'inline-flex' : 'none';
     }
   }
+
+  // Sync hamburger menu
+  const menuAdminItem = document.getElementById('menu-admin-item');
+  const menuUserSection = document.getElementById('menu-user-section');
+  const menuGuestSection = document.getElementById('menu-guest-section');
+  const menuUserEmail = document.getElementById('menu-user-email');
+
+  if (!user) {
+    if (menuAdminItem) menuAdminItem.style.display = 'none';
+    if (menuUserSection) menuUserSection.style.display = 'none';
+    if (menuGuestSection) menuGuestSection.style.display = 'block';
+  } else {
+    if (menuAdminItem) {
+      menuAdminItem.style.display = window.__CNS_isAdmin ? 'block' : 'none';
+    }
+    if (menuUserSection) {
+      menuUserSection.style.display = 'block';
+      if (menuUserEmail) menuUserEmail.textContent = user.email;
+    }
+    if (menuGuestSection) menuGuestSection.style.display = 'none';
+  }
 }
