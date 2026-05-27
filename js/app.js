@@ -14,6 +14,7 @@ let activeCampusPins = [];
 let currentRouteLayer = L.layerGroup();
 window.isNavigating = false;
 window.currentNavDestination = null;
+window.currentRouteNodes = [];
 
 window.buildingPolygons = window.buildingPolygons || [];
 window.state_entrancePolygons = window.state_entrancePolygons || [];
@@ -210,6 +211,71 @@ function setNavigationOverlayVisible(isVisible) {
   }
 }
 
+function setNavigationOverlayDestination(destination) {
+  const label = document.getElementById('active-nav-label');
+  if (!label || !destination) return;
+  label.textContent = 'Navigating to: ' + getLocationName(destination);
+}
+
+function getRouteNodes(pathIds, graph) {
+  if (!Array.isArray(pathIds) || !graph || !graph.nodes) return [];
+  return pathIds
+    .map(function(id) {
+      const node = graph.nodes.get(id);
+      return node ? { lat: node.lat, lng: node.lng } : null;
+    })
+    .filter(Boolean);
+}
+
+function getBearing(lat1, lng1, lat2, lng2) {
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const lat1R = lat1 * Math.PI / 180;
+  const lat2R = lat2 * Math.PI / 180;
+  const y = Math.sin(dLng) * Math.cos(lat2R);
+  const x = Math.cos(lat1R) * Math.sin(lat2R) -
+             Math.sin(lat1R) * Math.cos(lat2R) * Math.cos(dLng);
+  return Math.atan2(y, x) * 180 / Math.PI;
+}
+
+function getUpcomingTurn(routeNodes, userLat, userLng) {
+  if (!Array.isArray(routeNodes) || routeNodes.length < 3) return null;
+
+  let closestIdx = 0;
+  let closestDist = Infinity;
+
+  routeNodes.forEach(function(node, i) {
+    const d = haversine(userLat, userLng, node.lat, node.lng);
+    if (d < closestDist) {
+      closestDist = d;
+      closestIdx = i;
+    }
+  });
+
+  for (let i = closestIdx + 1; i < routeNodes.length - 1; i++) {
+    const distToNode = haversine(userLat, userLng, routeNodes[i].lat, routeNodes[i].lng);
+    if (distToNode > 40) break;
+
+    const prev = routeNodes[i - 1];
+    const curr = routeNodes[i];
+    const next = routeNodes[i + 1];
+    const bearingIn = getBearing(prev.lat, prev.lng, curr.lat, curr.lng);
+    const bearingOut = getBearing(curr.lat, curr.lng, next.lat, next.lng);
+    let angleDiff = bearingOut - bearingIn;
+
+    while (angleDiff > 180) angleDiff -= 360;
+    while (angleDiff < -180) angleDiff += 360;
+
+    if (Math.abs(angleDiff) > 30) {
+      return {
+        direction: angleDiff > 0 ? 'right' : 'left',
+        distance: Math.round(distToNode),
+        angle: Math.abs(Math.round(angleDiff))
+      };
+    }
+  }
+  return null;
+}
+
 function drawLiveRoute(pathIds, graph, options = {}) {
   const shouldFitBounds = options.fitBounds !== false;
   currentRouteLayer.clearLayers();
@@ -287,6 +353,8 @@ function startLiveNavigation(destinationPin) {
 
   window.isNavigating = true;
   window.currentNavDestination = destinationNode;
+  window.currentRouteNodes = getRouteNodes(result.path, graph);
+  setNavigationOverlayDestination(destinationNode);
   setNavigationOverlayVisible(true);
   drawLiveRoute(result.path, graph);
   if (map.getZoom() < window.__CNS_preNavZoom) {
@@ -298,6 +366,7 @@ function startLiveNavigation(destinationPin) {
 window.stopLiveNavigation = function stopLiveNavigation() {
   window.isNavigating = false;
   window.currentNavDestination = null;
+  window.currentRouteNodes = [];
   currentRouteLayer.clearLayers();
   setNavigationOverlayVisible(false);
 };
@@ -310,6 +379,17 @@ window.updateLiveNavigation = function updateLiveNavigation() {
 
   const destination = window.currentNavDestination;
   const distToDest = haversine(liveCoords.lat, liveCoords.lng, destination.lat, destination.lng);
+  const turnInfo = getUpcomingTurn(window.currentRouteNodes, liveCoords.lat, liveCoords.lng);
+  const turnEl = document.getElementById('turn-indicator');
+  if (turnEl) {
+    if (turnInfo) {
+      const arrow = turnInfo.direction === 'right' ? '➡️' : '⬅️';
+      turnEl.textContent = arrow + ' Turn ' + turnInfo.direction + ' in ' + turnInfo.distance + 'm';
+      turnEl.style.display = 'block';
+    } else {
+      turnEl.style.display = 'none';
+    }
+  }
 
   if (distToDest < 15) {
     alert('You have arrived at your destination!');
@@ -328,6 +408,7 @@ window.updateLiveNavigation = function updateLiveNavigation() {
   const result = runDijkstra(graph, ghostNode.id, destination.id);
 
   if (result && Array.isArray(result.path) && result.path.length > 0) {
+    window.currentRouteNodes = getRouteNodes(result.path, graph);
     drawLiveRoute(result.path, graph, { fitBounds: false });
   }
 };
@@ -446,13 +527,17 @@ async function initMap() {
     minZoom: 16,
     maxZoom: 22,
     zoomControl: true,
+    rotate: true,
+    rotateControl: {
+      closeOnZeroBearing: true
+    },
   };
 
   // Try to enable rotate plugin if available
   if (typeof L.Map.prototype.setBearing !== 'undefined' || window.leafletRotate) {
     mapOptions.rotate = true;
     mapOptions.touchRotate = true;
-    mapOptions.rotateControl = { closeOnZeroBearing: false, position: 'topleft' };
+    mapOptions.rotateControl = { closeOnZeroBearing: true, position: 'topleft' };
   }
 
   map = L.map('map', mapOptions);
@@ -525,51 +610,6 @@ async function initMap() {
   // Start auto-return watcher
   resetAutoReturnTimer();
 
-  function ensureZoomDebugPanel() {
-    let panel = document.getElementById('zoom-debug-panel');
-    if (panel) return panel;
-
-    panel = document.createElement('div');
-    panel.id = 'zoom-debug-panel';
-    panel.style.cssText =
-      'position:fixed;right:16px;bottom:16px;z-index:1600;' +
-      'min-width:118px;padding:10px 12px;border-radius:14px;' +
-      'background:rgba(255,255,255,0.92);backdrop-filter:blur(14px) saturate(180%);' +
-      '-webkit-backdrop-filter:blur(14px) saturate(180%);' +
-      'border:1px solid rgba(0,0,0,0.08);box-shadow:0 8px 28px rgba(0,0,0,0.16);' +
-      'font-family:var(--font-apple, -apple-system, BlinkMacSystemFont, Inter, sans-serif);' +
-      'color:#1c1c1e;pointer-events:none;text-align:left;';
-
-    panel.innerHTML =
-      '<div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:#6b6b6e;margin-bottom:3px;">Zoom</div>' +
-      '<div id="zoom-value" style="font-size:22px;line-height:1;font-weight:700;font-variant-numeric:tabular-nums;">--</div>' +
-      '<div id="zoom-level-label" style="font-size:11px;color:#3a3a3c;margin-top:4px;white-space:nowrap;">--</div>';
-
-    document.body.appendChild(panel);
-    return panel;
-  }
-
-  function updateZoomDisplay() {
-    ensureZoomDebugPanel();
-    const zv = document.getElementById('zoom-value');
-    const zl = document.getElementById('zoom-level-label');
-    if (!zv || !zl) return;
-
-    const z = map.getZoom();
-    zv.textContent = z.toFixed(2);
-
-    if (z < 15) zl.textContent = 'City level';
-    else if (z < 16) zl.textContent = 'Area level';
-    else if (z < 17) zl.textContent = 'Campus overview';
-    else if (z < 18) zl.textContent = 'Campus detail';
-    else if (z < 19) zl.textContent = 'Building level';
-    else if (z < 20) zl.textContent = 'Floor level';
-    else zl.textContent = 'Max detail';
-  }
-
-  map.on('zoomend', updateZoomDisplay);
-  map.on('zoom', updateZoomDisplay);
-  setTimeout(updateZoomDisplay, 800);
 }
 
 // ── Compass Control (BUG 8) ───────────────────────────────────────────────
@@ -1149,6 +1189,7 @@ async function initApp() {
   injectDynamicStyles();
   activeCampusPins = await loadCampusPins();
   await initMap();
+  populateReportPinDropdown();
   setupSearch();
   setupLanguageToggle();
   setupSidebarToggle();
@@ -1168,6 +1209,57 @@ async function initApp() {
   document.addEventListener('keydown', function (e) {
     if (e.key === 'Escape') closeLightbox();
   });
+}
+
+function populateReportPinDropdown() {
+  const select = document.getElementById('report-pin-select');
+  if (!select) return;
+  select.length = 1;
+  const pins = getActiveLocations();
+  pins.forEach(function(pin) {
+    const opt = document.createElement('option');
+    opt.value = pin.id;
+    opt.textContent = pin.nameEn;
+    select.appendChild(opt);
+  });
+}
+
+async function submitReport() {
+  const pinId = document.getElementById('report-pin-select').value;
+  const type = document.getElementById('report-type').value;
+  const desc = document.getElementById('report-description').value.trim();
+  const email = document.getElementById('report-user-email').value;
+  const status = document.getElementById('report-status');
+
+  if (!pinId) {
+    status.textContent = 'Please select a location.';
+    status.style.color = '#f87171';
+    return;
+  }
+
+  status.textContent = 'Submitting...';
+  status.style.color = 'var(--color-text-secondary)';
+
+  try {
+    await db.collection('pinReports').add({
+      pinId: pinId,
+      type: type,
+      description: desc,
+      reportedBy: email || 'anonymous',
+      timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+      status: 'open'
+    });
+    status.textContent = '✅ Report submitted. Thank you!';
+    status.style.color = '#4ade80';
+    setTimeout(function() {
+      closeReportModal();
+      document.getElementById('report-description').value = '';
+      document.getElementById('report-status').textContent = '';
+    }, 2000);
+  } catch (err) {
+    status.textContent = '❌ Failed: ' + err.message;
+    status.style.color = '#f87171';
+  }
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
