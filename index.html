@@ -66,8 +66,177 @@
           Logout
         </button>
       </div>
+      <button id="hamburger-btn" onclick="toggleHamburgerMenu()"
+        style="background:transparent; border:none; color:var(--color-text);
+        font-size:20px; cursor:pointer; padding:6px 10px;
+        border-radius:8px; display:inline-flex; align-items:center;">
+        ☰
+      </button>
     </div>
   </header>
+
+  <!-- Hamburger Menu -->
+  <div id="hamburger-menu" style="
+    display:none;
+    position:fixed;
+    top:56px;
+    right:0;
+    width:260px;
+    background:var(--color-surface, #1e1e2e);
+    border-left:1px solid var(--color-border, #333);
+    border-bottom:1px solid var(--color-border, #333);
+    border-radius:0 0 0 12px;
+    z-index:5000;
+    padding:8px 0;
+    box-shadow: -4px 4px 24px rgba(0,0,0,0.4);
+  ">
+    <div id="menu-admin-item" style="display:none;">
+      <a href="admin.html"
+        style="display:flex; align-items:center; gap:12px;
+        padding:14px 20px; color:var(--color-text);
+        text-decoration:none; font-size:14px;
+        border-bottom:1px solid var(--color-border,#333);">
+        <span style="font-size:18px;">⚙️</span>
+        <div>
+          <div style="font-weight:600;">Admin Panel</div>
+          <div style="font-size:11px; color:var(--color-text-secondary);">
+            Manage campus pins
+          </div>
+        </div>
+      </a>
+    </div>
+
+    <button onclick="openReportModal(); toggleHamburgerMenu();"
+      style="width:100%; display:flex; align-items:center; gap:12px;
+      padding:14px 20px; background:transparent; border:none;
+      border-bottom:1px solid var(--color-border,#333);
+      color:var(--color-text); cursor:pointer; font-size:14px; text-align:left;">
+      <span style="font-size:18px;">🚩</span>
+      <div>
+        <div style="font-weight:600;">Report an Issue</div>
+        <div style="font-size:11px; color:var(--color-text-secondary);">
+          Wrong pin location or name
+        </div>
+      </div>
+    </button>
+
+    <button onclick="openAboutModal(); toggleHamburgerMenu();"
+      style="width:100%; display:flex; align-items:center; gap:12px;
+      padding:14px 20px; background:transparent; border:none;
+      border-bottom:1px solid var(--color-border,#333);
+      color:var(--color-text); cursor:pointer; font-size:14px; text-align:left;">
+      <span style="font-size:18px;">ℹ️</span>
+      <div>
+        <div style="font-weight:600;">About</div>
+        <div style="font-size:11px; color:var(--color-text-secondary);">
+          Project info and credits
+        </div>
+      </div>
+    </button>
+
+    <div style="border-bottom:1px solid var(--color-border,#333);">
+      <button onclick="toggleThemeSubmenu()"
+        style="width:100%; display:flex; align-items:center;
+        justify-content:space-between;
+        padding:14px 20px; background:transparent; border:none;
+        color:var(--color-text); cursor:pointer;
+        font-size:14px; text-align:left;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:18px;">🎨</span>
+          <div>
+            <div style="font-weight:600;">Theme</div>
+            <div id="current-theme-label"
+              style="font-size:11px;
+              color:var(--color-text-secondary);">Dark</div>
+          </div>
+        </div>
+        <span id="theme-chevron"
+          style="font-size:12px;
+          color:var(--color-text-secondary);
+          transition:transform 0.2s;">▼</span>
+      </button>
+
+      <div id="theme-submenu" style="display:none;
+        padding:4px 20px 12px;">
+        <button onclick="setTheme('dark')"
+          id="theme-opt-dark"
+          style="width:100%; display:flex; align-items:center;
+          gap:10px; padding:10px 12px; margin-bottom:4px;
+          background:var(--color-surface-2); border:1px solid var(--color-border);
+          border-radius:10px; color:var(--color-text);
+          cursor:pointer; font-size:13px; text-align:left;">
+          <span>🌑</span>
+          <div>
+            <div style="font-weight:500;">Dark</div>
+            <div style="font-size:11px; color:var(--color-text-secondary);">
+              Default dark mode
+            </div>
+          </div>
+          <span id="check-dark" style="margin-left:auto;">✓</span>
+        </button>
+
+        <button onclick="setTheme('light')"
+          id="theme-opt-light"
+          style="width:100%; display:flex; align-items:center;
+          gap:10px; padding:10px 12px; margin-bottom:4px;
+          background:var(--color-surface-2); border:1px solid var(--color-border);
+          border-radius:10px; color:var(--color-text);
+          cursor:pointer; font-size:13px; text-align:left;">
+          <span>☀️</span>
+          <div>
+            <div style="font-weight:500;">Light</div>
+            <div style="font-size:11px; color:var(--color-text-secondary);">
+              Clean white mode
+            </div>
+          </div>
+          <span id="check-light" style="margin-left:auto; display:none;">✓</span>
+        </button>
+
+        <button onclick="setTheme('midnight')"
+          id="theme-opt-midnight"
+          style="width:100%; display:flex; align-items:center;
+          gap:10px; padding:10px 12px;
+          background:var(--color-surface-2); border:1px solid var(--color-border);
+          border-radius:10px; color:var(--color-text);
+          cursor:pointer; font-size:13px; text-align:left;">
+          <span>🌌</span>
+          <div>
+            <div style="font-weight:500;">Midnight</div>
+            <div style="font-size:11px; color:var(--color-text-secondary);">
+              Deep space black
+            </div>
+          </div>
+          <span id="check-midnight" style="margin-left:auto; display:none;">✓</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="menu-user-section" style="display:none; padding:12px 20px;">
+      <div style="font-size:11px; color:var(--color-text-secondary);
+        margin-bottom:6px;">Signed in as</div>
+      <div id="menu-user-email"
+        style="font-size:13px; color:var(--color-text);
+        font-weight:500; word-break:break-all;"></div>
+      <button onclick="signOut(); toggleHamburgerMenu();"
+        style="margin-top:10px; width:100%; padding:8px;
+        background:transparent; border:1px solid var(--color-border,#333);
+        border-radius:8px; color:var(--color-text-secondary);
+        font-size:13px; cursor:pointer;">
+        Logout
+      </button>
+    </div>
+
+    <div id="menu-guest-section" style="padding:12px 20px;">
+      <div style="font-size:12px; color:var(--color-text-secondary);
+        margin-bottom:8px;">Not signed in</div>
+      <button onclick="showLoginModal(); toggleHamburgerMenu();"
+        style="width:100%; padding:8px 12px;
+        background:var(--color-accent,#4f9cf9); color:#fff;
+        border:none; border-radius:8px; font-size:13px; cursor:pointer;">
+        🔐 Login
+      </button>
+    </div>
+  </div>
 
   <!-- ── Floating Search Bar (Google Maps style) ───────── -->
   <div class="search-container">
@@ -133,9 +302,18 @@
     </div>
   </aside>
 
-  <div id="active-nav-overlay" style="display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; background: white; padding: 10px 20px; border-radius: 30px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); align-items: center; gap: 10px;">
-    <div style="font-weight: 600; font-size: 14px; color: #111827;">Navigating...</div>
-    <button id="btn-stop-nav" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 20px; font-weight: bold; cursor: pointer;">Stop</button>
+  <div id="active-nav-overlay" style="display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; background: white; padding: 12px 18px; border-radius: 18px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); flex-direction: column; align-items: stretch; gap: 8px; min-width: 240px;">
+    <div id="active-nav-label" style="font-weight: 600; font-size: 14px; color: #111827; text-align:center;">Navigating...</div>
+    <div id="proximity-notice" class="proximity-notice" role="status" aria-live="polite" style="position:static; transform:none; pointer-events:none;">
+      <div class="proximity-notice-inner"></div>
+    </div>
+    <div id="turn-indicator" style="display:none;
+      background:rgba(0,0,0,0.7); color:#fff;
+      padding:6px 14px; border-radius:20px;
+      font-size:14px; font-weight:600;
+      text-align:center;">
+    </div>
+    <button id="btn-stop-nav" style="position: relative; z-index: 10; background: #ef4444; color: white; border: none; padding: 8px 14px; border-radius: 20px; font-weight: bold; cursor: pointer;">Stop Navigation</button>
   </div>
 
   <!-- ── Leaflet JS ─────────────────────────────────────── -->
@@ -160,22 +338,35 @@
 
   <!-- Login Modal -->
   <div id="login-modal" style="display:none; position:fixed; inset:0; z-index:9999;
-    background:rgba(0,0,0,0.6); align-items:center; justify-content:center;">
-    <div style="background:var(--color-surface, #1e1e2e); border-radius:16px;
-      padding:32px 28px; width:300px; text-align:center; box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+    background:rgba(0,0,0,0.75); align-items:center; justify-content:center;
+    backdrop-filter:blur(6px);">
+    <div style="background:var(--color-surface, #1a1a2e); border:1px solid rgba(255,255,255,0.08); border-radius:20px;
+      padding:36px 28px; width:320px; max-width:90vw; text-align:center; box-shadow:0 20px 60px rgba(0,0,0,0.6); position:relative;">
+      <button onclick="hideLoginModal()" style="position:absolute; top:14px; right:14px; background:transparent; border:none; color:var(--color-text-secondary, #888); font-size:18px; cursor:pointer; padding:4px 8px; border-radius:6px; line-height:1;">✕</button>
       
       <div style="font-size:32px; margin-bottom:8px;">🗺️</div>
-      <h2 style="margin:0 0 4px; font-size:18px; color:var(--color-text);">Smart Campus Navigator</h2>
+      <h2 style="margin:0 0 4px; font-size:20px; font-weight:700; color:var(--color-text, #fff); letter-spacing:-0.3px;">Campus Navigator</h2>
       <p style="margin:0 0 24px; font-size:13px; color:var(--color-text-secondary);">
         Dr. B.R. Ambedkar Polytechnic College
       </p>
 
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+        <div style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></div>
+        <span style="font-size:11px; color:var(--color-text-secondary,#666);">Sign in to continue</span>
+        <div style="flex:1; height:1px; background:rgba(255,255,255,0.08);"></div>
+      </div>
+
       <button onclick="signInWithGoogle()"
-        style="width:100%; padding:12px; border-radius:10px; border:1px solid var(--color-border);
-        background:var(--color-surface-2, #2a2a3e); color:var(--color-text);
-        font-size:14px; cursor:pointer; display:flex; align-items:center;
-        justify-content:center; gap:10px; margin-bottom:12px;">
-        <img src="https://www.google.com/favicon.ico" width="16" height="16">
+        style="width:100%; padding:13px 16px; border-radius:12px; border:1px solid rgba(255,255,255,0.12);
+        background:rgba(255,255,255,0.06); color:var(--color-text, #fff);
+        font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center;
+        justify-content:center; gap:10px; transition:background 0.2s; margin-bottom:12px;">
+        <svg width="18" height="18" viewBox="0 0 18 18">
+          <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
+          <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
+          <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
+          <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
+        </svg>
         Continue with Google
       </button>
 
@@ -186,7 +377,97 @@
       <button onclick="hideLoginModal()"
         style="background:transparent; border:none; color:var(--color-text-secondary);
         font-size:13px; cursor:pointer; text-decoration:underline;">
-        Continue without login
+        Continue without signing in
+      </button>
+    </div>
+  </div>
+
+  <!-- Report Issue Modal -->
+  <div id="report-modal" style="display:none; position:fixed; inset:0;
+    z-index:9999; background:rgba(0,0,0,0.6);
+    align-items:center; justify-content:center;">
+    <div style="background:var(--color-surface,#1e1e2e);
+      border-radius:16px; padding:28px 24px; width:320px;
+      max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.4);">
+      <h3 style="margin:0 0 16px; font-size:16px;
+        color:var(--color-text);">🚩 Report an Issue</h3>
+      <select id="report-pin-select"
+        style="width:100%; padding:10px; border-radius:8px;
+        background:var(--color-surface-2,#2a2a3e);
+        border:1px solid var(--color-border,#333);
+        color:var(--color-text); font-size:13px; margin-bottom:12px;">
+        <option value="">Select location...</option>
+      </select>
+      <select id="report-type"
+        style="width:100%; padding:10px; border-radius:8px;
+        background:var(--color-surface-2,#2a2a3e);
+        border:1px solid var(--color-border,#333);
+        color:var(--color-text); font-size:13px; margin-bottom:12px;">
+        <option value="wrong_location">Wrong location on map</option>
+        <option value="wrong_name">Wrong name</option>
+        <option value="missing_pin">Missing location</option>
+        <option value="other">Other issue</option>
+      </select>
+      <textarea id="report-description"
+        placeholder="Describe the issue (optional)..."
+        style="width:100%; padding:10px; border-radius:8px;
+        background:var(--color-surface-2,#2a2a3e);
+        border:1px solid var(--color-border,#333);
+        color:var(--color-text); font-size:13px;
+        resize:none; height:80px; box-sizing:border-box;
+        margin-bottom:12px;"></textarea>
+      <input type="hidden" id="report-user-email">
+      <div style="display:flex; gap:8px;">
+        <button onclick="submitReport()"
+          style="flex:1; padding:10px; background:var(--color-accent,#4f9cf9);
+          color:#fff; border:none; border-radius:8px;
+          font-size:14px; cursor:pointer; font-weight:600;">
+          Submit
+        </button>
+        <button onclick="closeReportModal()"
+          style="flex:1; padding:10px; background:transparent;
+          border:1px solid var(--color-border,#333);
+          border-radius:8px; color:var(--color-text-secondary);
+          font-size:14px; cursor:pointer;">
+          Cancel
+        </button>
+      </div>
+      <div id="report-status" style="margin-top:10px; font-size:13px;
+        text-align:center; color:var(--color-text-secondary);"></div>
+    </div>
+  </div>
+
+  <!-- About Modal -->
+  <div id="about-modal" style="display:none; position:fixed; inset:0;
+    z-index:9999; background:rgba(0,0,0,0.6);
+    align-items:center; justify-content:center;">
+    <div style="background:var(--color-surface,#1e1e2e);
+      border-radius:16px; padding:28px 24px; width:320px;
+      max-width:90vw; box-shadow:0 8px 32px rgba(0,0,0,0.4);
+      text-align:center;">
+      <div style="font-size:40px; margin-bottom:8px;">🗺️</div>
+      <h2 style="margin:0 0 4px; font-size:18px;
+        color:var(--color-text);">Smart Campus Navigator</h2>
+      <p style="margin:0 0 16px; font-size:13px;
+        color:var(--color-text-secondary); line-height:1.5;">
+        Dr. B.R. Ambedkar Polytechnic College, Gwalior<br>
+        Final Year Diploma Project — 2025-26
+      </p>
+      <div style="background:var(--color-surface-2,#2a2a3e);
+        border-radius:10px; padding:14px; margin-bottom:16px;
+        text-align:left; font-size:12px;
+        color:var(--color-text-secondary); line-height:1.8;">
+        <b style="color:var(--color-text);">Tech Stack</b><br>
+        Leaflet.js · Mapbox · Firebase<br>
+        Dijkstra Routing · GPS Tracking<br>
+        HTML5 · CSS3 · Vanilla JS
+      </div>
+      <button onclick="closeAboutModal()"
+        style="width:100%; padding:10px;
+        background:var(--color-accent,#4f9cf9);
+        color:#fff; border:none; border-radius:8px;
+        font-size:14px; cursor:pointer;">
+        Close
       </button>
     </div>
   </div>
@@ -198,6 +479,66 @@
   function hideLoginModal() {
     document.getElementById('login-modal').style.display = 'none';
   }
+  function toggleHamburgerMenu() {
+    const menu = document.getElementById('hamburger-menu');
+    const isOpen = menu.style.display === 'block';
+    menu.style.display = isOpen ? 'none' : 'block';
+  }
+
+  document.addEventListener('click', function(e) {
+    const menu = document.getElementById('hamburger-menu');
+    const btn = document.getElementById('hamburger-btn');
+    if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+      menu.style.display = 'none';
+    }
+  });
+
+  function openAboutModal() {
+    document.getElementById('about-modal').style.display = 'flex';
+  }
+  function closeAboutModal() {
+    document.getElementById('about-modal').style.display = 'none';
+  }
+  function openReportModal() {
+    const user = window.__CNS_currentUser;
+    const emailField = document.getElementById('report-user-email');
+    if (emailField) {
+      emailField.value = user ? user.email : '';
+    }
+    document.getElementById('report-modal').style.display = 'flex';
+  }
+  function closeReportModal() {
+    document.getElementById('report-modal').style.display = 'none';
+  }
+
+  function toggleThemeSubmenu() {
+    const sub = document.getElementById('theme-submenu');
+    const chevron = document.getElementById('theme-chevron');
+    const isOpen = sub.style.display === 'block';
+    sub.style.display = isOpen ? 'none' : 'block';
+    chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  }
+
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('cns-theme', theme);
+
+    const labels = { dark: 'Dark', light: 'Light', midnight: 'Midnight' };
+    const el = document.getElementById('current-theme-label');
+    if (el) el.textContent = labels[theme] || 'Dark';
+
+    ['dark', 'light', 'midnight'].forEach(function(t) {
+      const check = document.getElementById('check-' + t);
+      if (check) check.style.display = t === theme ? 'inline' : 'none';
+    });
+  }
+
+  function loadSavedTheme() {
+    const saved = localStorage.getItem('cns-theme') || 'dark';
+    setTheme(saved);
+  }
+
+  loadSavedTheme();
   </script>
 
 </body>
