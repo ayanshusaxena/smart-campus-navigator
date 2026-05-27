@@ -12,6 +12,35 @@ function signOut() {
   auth.signOut();
 }
 
+function signInWithEmailPassword() {
+  const emailInput = document.getElementById('admin-email-input');
+  const passInput  = document.getElementById('admin-pass-input');
+  const errorEl    = document.getElementById('admin-login-error');
+
+  const email    = emailInput ? emailInput.value.trim() : '';
+  const password = passInput  ? passInput.value         : '';
+
+  if (!email || !password) {
+    if (errorEl) errorEl.textContent = 'Enter email and password.';
+    return;
+  }
+
+  if (errorEl) errorEl.textContent = '';
+
+  auth.signInWithEmailAndPassword(email, password)
+    .catch(function(err) {
+      if (errorEl) {
+        const msg = {
+          'auth/wrong-password':    'Incorrect password.',
+          'auth/user-not-found':    'No account found.',
+          'auth/invalid-email':     'Invalid email address.',
+          'auth/too-many-requests': 'Too many attempts. Try later.'
+        }[err.code] || 'Login failed. Try again.';
+        errorEl.textContent = msg;
+      }
+    });
+}
+
 function isAdmin(user) {
   return user && user.email === ADMIN_EMAIL;
 }
