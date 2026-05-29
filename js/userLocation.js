@@ -44,6 +44,9 @@
     let marker = null;
     let accuracyCircle = null;
     let proximityNotifier = null;
+    let smoothLat = null;
+    let smoothLng = null;
+    const SMOOTH_ALPHA = 0.25; // lower = smoother but laggier, 0.25 is good balance
 
     global.__CNS_userLocation = global.__CNS_userLocation || {
       lat: null,
@@ -107,13 +110,24 @@
       const c = pos && pos.coords ? pos.coords : null;
       if (!c || typeof c.latitude !== 'number' || typeof c.longitude !== 'number') return;
 
-      const latlng = [c.latitude, c.longitude];
+      // Exponential moving average smoothing — reduces GPS noise/jitter
+      if (smoothLat === null) {
+        smoothLat = c.latitude;
+        smoothLng = c.longitude;
+      } else {
+        smoothLat = smoothLat + SMOOTH_ALPHA * (c.latitude - smoothLat);
+        smoothLng = smoothLng + SMOOTH_ALPHA * (c.longitude - smoothLng);
+      }
+      const smoothedLat = smoothLat;
+      const smoothedLng = smoothLng;
+
+      const latlng = [smoothedLat, smoothedLng];
 
       // Building polygon lock — if user is inside a known building polygon,
       // keep the displayed dot inside the polygon boundary.
       // Uses isInsideBuilding from routing.js (loaded before userLocation.js).
-      let displayLat = c.latitude;
-      let displayLng = c.longitude;
+      let displayLat = smoothedLat;
+      let displayLng = smoothedLng;
 
       if (
         typeof isInsideBuilding === 'function' &&
@@ -124,7 +138,7 @@
         // Raw GPS is outside but was inside before — could be GPS drift.
         // We keep raw coords; polygon lock only prevents dot from
         // floating FAR outside during indoor use.
-        const insideNow = isInsideBuilding(c.latitude, c.longitude);
+        const insideNow = isInsideBuilding(smoothedLat, smoothedLng);
         const lastLat = window.__CNS_userLocation?.lat;
         const lastLng = window.__CNS_userLocation?.lng;
 
@@ -137,7 +151,7 @@
           // Previous fix was indoor, new fix jumped outside.
           // Check if jump distance is suspiciously large (> 20m = GPS drift).
           const haversine = window.__CNS_haversine || function(a,b,c,d){ return 0; };
-          const jumpDist = haversine(lastLat, lastLng, c.latitude, c.longitude);
+          const jumpDist = haversine(lastLat, lastLng, smoothedLat, smoothedLng);
           if (jumpDist > 20) {
             // Reject the jump — hold last known good indoor position.
             displayLat = lastLat;
@@ -154,8 +168,8 @@
         accuracy: c.accuracy,
         updatedAt: Date.now(),
       };
-      global.userLat = c.latitude;
-      global.userLng = c.longitude;
+      global.userLat = smoothedLat;
+      global.userLng = smoothedLng;
 
       ensureMarker(displayLatlng).setLatLng(displayLatlng);
       ensureAccuracyCircle(displayLatlng, c.accuracy);
@@ -166,7 +180,7 @@
           global.__CNS_getLocations && typeof global.__CNS_getLocations === 'function'
             ? global.__CNS_getLocations()
             : (global.CAMPUS_LOCATIONS || []);
-        proximityNotifier.update(c.latitude, c.longitude, locations);
+        proximityNotifier.update(smoothedLat, smoothedLng, locations);
       }
 
       if (!hasCentered) {
@@ -202,6 +216,8 @@
           } catch (_) { }
         }
         watchId = null;
+        smoothLat = null;
+        smoothLng = null;
 
         if (marker) {
           try { marker.remove(); } catch (_) { }
