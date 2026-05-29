@@ -15,6 +15,9 @@ let currentRouteLayer = L.layerGroup();
 window.isNavigating = false;
 window.currentNavDestination = null;
 window.currentRouteNodes = [];
+let _navGraphCache = null;
+let _navLastReroutePos = null;
+const REROUTE_THRESHOLD_M = 15;
 
 window.buildingPolygons = window.buildingPolygons || [];
 window.state_entrancePolygons = window.state_entrancePolygons || [];
@@ -164,12 +167,17 @@ function snapToNearestPath(rawLat, rawLng) {
       const px = rawLng,  py = rawLat;
 
       const dx = bx - ax, dy = by - ay;
-      const lenSq = dx * dx + dy * dy;
-      let t = lenSq > 0 ? ((px - ax) * dx + (py - ay) * dy) / lenSq : 0;
-      t = Math.max(0, Math.min(1, t));
-
-      const projLat = ay + t * dy;
-      const projLng = ax + t * dx;
+      // Scale lng component by cos(lat) to account for Earth's curvature
+      const cosLat = Math.cos(ay * Math.PI / 180);
+      const dyM = dy;
+      const dxM = dx * cosLat;
+      const pyM = py - ay;
+      const pxM = (px - ax) * cosLat;
+      const lenSqM = dxM * dxM + dyM * dyM;
+      let tFixed = lenSqM > 0 ? (pxM * dxM + pyM * dyM) / lenSqM : 0;
+      tFixed = Math.max(0, Math.min(1, tFixed));
+      const projLat = ay + tFixed * dy;
+      const projLng = ax + tFixed * dx;
       const dist = haversine(rawLat, rawLng, projLat, projLng);
 
       if (dist < bestDist) {
@@ -368,6 +376,8 @@ window.stopLiveNavigation = function stopLiveNavigation() {
   window.currentNavDestination = null;
   window.currentRouteNodes = [];
   currentRouteLayer.clearLayers();
+  _navGraphCache = null;
+  _navLastReroutePos = null;
   setNavigationOverlayVisible(false);
 };
 
@@ -379,6 +389,7 @@ window.updateLiveNavigation = function updateLiveNavigation() {
 
   const destination = window.currentNavDestination;
   const distToDest = haversine(liveCoords.lat, liveCoords.lng, destination.lat, destination.lng);
+
   const turnInfo = getUpcomingTurn(window.currentRouteNodes, liveCoords.lat, liveCoords.lng);
   const turnEl = document.getElementById('turn-indicator');
   if (turnEl) {
@@ -397,6 +408,14 @@ window.updateLiveNavigation = function updateLiveNavigation() {
     return;
   }
 
+  // Only reroute if user moved significantly from last reroute position
+  const movedEnough = !_navLastReroutePos ||
+    haversine(liveCoords.lat, liveCoords.lng, _navLastReroutePos.lat, _navLastReroutePos.lng) > REROUTE_THRESHOLD_M;
+
+  if (!movedEnough && _navGraphCache) return;
+
+  _navLastReroutePos = { lat: liveCoords.lat, lng: liveCoords.lng };
+
   const ghostNode = {
     id: 'live_user_001',
     lat: liveCoords.lat,
@@ -404,15 +423,14 @@ window.updateLiveNavigation = function updateLiveNavigation() {
     nameEn: 'My Location',
   };
 
-  const graph = buildRoutingGraph(campusPaths, [ghostNode, destination], campusEntranceNodes);
-  const result = runDijkstra(graph, ghostNode.id, destination.id);
+  _navGraphCache = buildRoutingGraph(campusPaths, [ghostNode, destination], campusEntranceNodes);
+  const result = runDijkstra(_navGraphCache, ghostNode.id, destination.id);
 
   if (result && Array.isArray(result.path) && result.path.length > 0) {
-    window.currentRouteNodes = getRouteNodes(result.path, graph);
-    drawLiveRoute(result.path, graph, { fitBounds: false });
+    window.currentRouteNodes = getRouteNodes(result.path, _navGraphCache);
+    drawLiveRoute(result.path, _navGraphCache, { fitBounds: false });
   }
 };
-
 // ── Category colours ──────────────────────────────────────────────────────
 const categoryColors = {
   academic: '#4285F4',
