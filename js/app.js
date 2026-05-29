@@ -945,15 +945,46 @@ function setupSearch() {
     searchResults.classList.remove('visible');
   }
 
+  function fuzzyScore(str, query) {
+    str = str.toLowerCase();
+    query = query.toLowerCase().trim();
+    if (!query) return 0;
+    if (str === query) return 100;
+    if (str.startsWith(query)) return 90;
+    if (str.includes(query)) return 75;
+
+    // Character-by-character fuzzy match
+    let si = 0, qi = 0, score = 0;
+    while (si < str.length && qi < query.length) {
+      if (str[si] === query[qi]) { score++; qi++; }
+      si++;
+    }
+    return qi === query.length ? Math.round((score / query.length) * 60) : 0;
+  }
+
+  function getSearchMatches(query) {
+    return getActiveLocations()
+      .map((pin) => ({
+        pin,
+        score: Math.max(
+          fuzzyScore(pin.nameEn, query),
+          fuzzyScore(pin.nameHi || '', query),
+          fuzzyScore(pin.category || '', query)
+        )
+      }))
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 6)
+      .map((item) => item.pin);
+  }
+
   function renderResults(query) {
     const strings = LANG[currentLang];
     const trimmed = query.trim().toLowerCase();
 
     if (!trimmed) { clearResults(); return; }
 
-    const matches = getActiveLocations().filter((loc) =>
-      getLocationName(loc).toLowerCase().includes(trimmed)
-    );
+    const matches = getSearchMatches(trimmed);
 
     searchResults.innerHTML = '';
 
@@ -966,7 +997,7 @@ function setupSearch() {
       return;
     }
 
-    matches.slice(0, 8).forEach((loc) => {
+    matches.forEach((loc) => {
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'search-result-item';
@@ -999,9 +1030,7 @@ function setupSearch() {
   searchInput.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') {
       const trimmed = (searchInput.value || '').trim().toLowerCase();
-      const matches = getActiveLocations().filter((loc) =>
-        getLocationName(loc).toLowerCase().includes(trimmed)
-      );
+      const matches = getSearchMatches(trimmed);
       if (matches.length === 1) {
         focusLocation(matches[0], { fromSearch: true });
         clearResults();
