@@ -559,6 +559,7 @@ async function initMap() {
   }
 
   map = L.map('map', mapOptions);
+  window.__CNS_map = map;
   currentRouteLayer.addTo(map);
   await loadCampusPaths();
 
