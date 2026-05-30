@@ -47,6 +47,8 @@
     let smoothLat = null;
     let smoothLng = null;
     const SMOOTH_ALPHA = 0.25; // lower = smoother but laggier, 0.25 is good balance
+    const MIN_MOVE_METERS = 3; // ignore updates smaller than this
+    const MAX_ACCURACY_METERS = 30; // reject if GPS accuracy is worse than this
 
     global.__CNS_userLocation = global.__CNS_userLocation || {
       lat: null,
@@ -110,6 +112,9 @@
       const c = pos && pos.coords ? pos.coords : null;
       if (!c || typeof c.latitude !== 'number' || typeof c.longitude !== 'number') return;
 
+      // Reject low-accuracy readings (GPS noise)
+      if (Number.isFinite(c.accuracy) && c.accuracy > MAX_ACCURACY_METERS) return;
+
       // Exponential moving average smoothing — reduces GPS noise/jitter
       if (smoothLat === null) {
         smoothLat = c.latitude;
@@ -120,6 +125,21 @@
       }
       const smoothedLat = smoothLat;
       const smoothedLng = smoothLng;
+
+      // Dead zone - don't update if movement is smaller than GPS noise floor
+      const lastLat = global.__CNS_userLocation?.lat;
+      const lastLng = global.__CNS_userLocation?.lng;
+      const haversineFn = global.__CNS_haversine || haversine;
+      if (
+        Number.isFinite(lastLat) && Number.isFinite(lastLng) &&
+        haversineFn(smoothedLat, smoothedLng, lastLat, lastLng) < MIN_MOVE_METERS
+      ) {
+        // Position hasn't meaningfully changed - skip update, prevent drift
+        if (global.isNavigating && typeof global.updateLiveNavigation === 'function') {
+          global.updateLiveNavigation();
+        }
+        return;
+      }
 
       const latlng = [smoothedLat, smoothedLng];
 
