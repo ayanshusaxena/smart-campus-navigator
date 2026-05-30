@@ -64,6 +64,46 @@
       });
     }
 
+    // Recenter button — matches Leaflet zoom control style
+    const recenterBtn = document.createElement('button');
+    recenterBtn.id = 'recenter-btn';
+    recenterBtn.setAttribute('aria-label', 'Center on my location');
+    recenterBtn.title = 'My location';
+    recenterBtn.innerHTML = '⊕';
+    recenterBtn.style.cssText = [
+      'display:flex',
+      'align-items:center',
+      'justify-content:center',
+      'width:26px',
+      'height:26px',
+      'margin-top:1px',
+      'background:white',
+      'border:none',
+      'border-radius:2px',
+      'color:#333',
+      'font-size:18px',
+      'line-height:1',
+      'cursor:pointer',
+      'box-shadow:none',
+      '-webkit-user-select:none',
+      'user-select:none',
+    ].join(';');
+
+    recenterBtn.addEventListener('click', function () {
+      const loc = global.__CNS_userLocation;
+      if (loc && Number.isFinite(loc.lat) && Number.isFinite(loc.lng)) {
+        // Find the Leaflet map instance — try common globals
+        const mapInstance = global.__CNS_map || global.map || global._leaflet_map;
+        if (mapInstance && typeof mapInstance.flyTo === 'function') {
+          mapInstance.flyTo([loc.lat, loc.lng], 18, { duration: 0.8 });
+        }
+      }
+    });
+
+    // Append inside the same Leaflet zoom container
+    const zoomContainer = document.querySelector('.leaflet-control-zoom');
+    if (zoomContainer) zoomContainer.appendChild(recenterBtn);
+
     function ensureMarker(latlng) {
       if (marker) return marker;
 
