@@ -12,7 +12,7 @@
   const DEFAULT_WATCH_OPTIONS = {
     enableHighAccuracy: true,
     maximumAge: 0,
-    timeout: 15000,
+    timeout: 30000,
   };
 
   function ensureLeaflet() {
