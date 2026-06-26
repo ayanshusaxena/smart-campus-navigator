@@ -71,11 +71,17 @@ body {
   white-space: nowrap;
 }
 
-/* Pannellum container - takes all remaining height */
 #panorama-container {
   flex: 1;
   width: 100%;
   min-height: 0;
+  overflow: hidden;
+  position: relative;
+  background: #000;
+}
+
+#panorama-container::-webkit-scrollbar {
+  display: none;
 }
 
 /* Bottom nav */
@@ -179,23 +185,6 @@ body {
 .sv-loc-chip:hover {
   border-color: rgba(79,156,249,0.4);
   color: #c8d8ff;
-}
-
-/* Pannellum hotspot override */
-.pnlm-hotspot-base {
-  background: rgba(79,156,249,0.85) !important;
-  border: 2px solid #fff !important;
-  border-radius: 50% !important;
-}
-
-.pnlm-hotspot-base:hover {
-  background: rgba(79,156,249,1) !important;
-}
-
-/* Pannellum controls override */
-.pnlm-controls-container {
-  top: 12px !important;
-  right: 12px !important;
 }
 
 /* Mobile responsive */
