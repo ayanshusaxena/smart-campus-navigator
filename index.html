@@ -135,6 +135,21 @@
       </div>
     </button>
 
+    <!-- Street View -->
+    <a href="street-view/index.html"
+      style="display:flex; align-items:center; gap:12px;
+      padding:14px 20px; color:var(--color-text);
+      text-decoration:none; font-size:14px;
+      border-bottom:1px solid var(--color-border,#333);">
+      <span style="font-size:18px;">🚶</span>
+      <div>
+        <div style="font-weight:600;">Street View</div>
+        <div style="font-size:11px; color:var(--color-text-secondary);">
+          360° campus walkthrough
+        </div>
+      </div>
+    </a>
+
     <div style="border-bottom:1px solid var(--color-border);">
       <button onclick="toggleThemeSubmenu()"
         style="width:100%; display:flex; align-items:center;
@@ -316,6 +331,19 @@
     </div>
     <button id="btn-stop-nav" style="position: relative; z-index: 10; background: var(--color-accent); color: var(--color-on-accent); border: none; padding: 8px 14px; border-radius: 20px; font-weight: bold; cursor: pointer;">Stop Navigation</button>
   </div>
+
+  <!-- Street View floating button -->
+  <a href="street-view/index.html" id="sv-float-btn"
+    style="position:fixed; bottom:90px; right:16px;
+    z-index:1000; background:var(--color-surface,#1a1a2e);
+    border:1px solid var(--color-border,rgba(255,255,255,0.08));
+    border-radius:12px; padding:10px 14px;
+    display:flex; align-items:center; gap:8px;
+    text-decoration:none; color:var(--color-text,#fff);
+    font-size:13px; font-weight:600;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+    🚶 Street View
+  </a>
 
   <!-- ── Leaflet JS ─────────────────────────────────────── -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
