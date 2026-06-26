@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Street View — Smart Campus Navigator</title>
+
+  <!-- Pannellum 360° viewer -->
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.css">
+  <script
+    src="https://cdn.jsdelivr.net/npm/pannellum@2.5.6/build/pannellum.js">
+  </script>
+
+  <link rel="stylesheet" href="sv-style.css">
+</head>
+<body>
+
+  <!-- Top bar -->
+  <header class="sv-navbar">
+    <a href="../index.html" class="sv-back-btn">
+      ← Back to Map
+    </a>
+    <div class="sv-title">
+      <span class="sv-icon">🚶</span>
+      <div>
+        <div class="sv-title-main" id="location-title">
+          Main Gate
+        </div>
+        <div class="sv-title-sub">
+          Dr. B.R. Ambedkar Polytechnic College
+        </div>
+      </div>
+    </div>
+    <div class="sv-counter" id="location-counter">1 / 7</div>
+  </header>
+
+  <!-- Pannellum viewer container -->
+  <div id="panorama-container"></div>
+
+  <!-- Bottom navigation strip -->
+  <div class="sv-bottom-nav">
+    <button class="sv-nav-btn" id="btn-prev" onclick="goToPrev()">
+      ← Prev
+    </button>
+
+    <!-- Location dots -->
+    <div class="sv-dots" id="location-dots"></div>
+
+    <button class="sv-nav-btn" id="btn-next" onclick="goToNext()">
+      Next →
+    </button>
+  </div>
+
+  <!-- Location label strip -->
+  <div class="sv-location-strip" id="location-strip"></div>
+
+  <script src="sv-app.js"></script>
+</body>
+</html>
