@@ -1,92 +1,50 @@
 // sv-app.js - Smart Campus Navigator Street View
 // CSS-based panorama slider
 
-// Panorama data with yaw angles from field measurement
+// Panorama data
 
 const LOCATIONS = [
   {
     id: "img1",
     label: "Main Gate",
     sublabel: "Campus entrance from Jhansi Road",
-    file: "photos/img1.jpeg",
-    defaultYaw: 340,
-    defaultPitch: 0,
-    nextHotspotYaw: 329,
-    nextHotspotPitch: 0,
-    prevHotspotYaw: 149,
-    prevHotspotPitch: 0
+    file: "photos/img1.jpeg"
   },
   {
     id: "img2",
     label: "Inside Gate",
     sublabel: "Just inside the main entrance",
-    file: "photos/img2.jpeg",
-    defaultYaw: 151,
-    defaultPitch: 0,
-    nextHotspotYaw: 171,
-    nextHotspotPitch: 0,
-    prevHotspotYaw: 340,
-    prevHotspotPitch: 0
+    file: "photos/img2.jpeg"
   },
   {
     id: "img3",
     label: "Campus Path",
     sublabel: "Main walking path inside campus",
-    file: "photos/img3.jpeg",
-    defaultYaw: 313,
-    defaultPitch: 0,
-    nextHotspotYaw: 313,
-    nextHotspotPitch: 0,
-    prevHotspotYaw: 133,
-    prevHotspotPitch: 0
+    file: "photos/img3.jpeg"
   },
   {
     id: "img4",
     label: "Academic Block",
     sublabel: "Approaching academic buildings",
-    file: "photos/img4.jpeg",
-    defaultYaw: 318,
-    defaultPitch: 0,
-    nextHotspotYaw: 318,
-    nextHotspotPitch: 0,
-    prevHotspotYaw: 138,
-    prevHotspotPitch: 0
+    file: "photos/img4.jpeg"
   },
   {
     id: "img5",
     label: "Mid Campus",
     sublabel: "Central campus area",
-    file: "photos/img5.jpeg",
-    defaultYaw: 33,
-    defaultPitch: 0,
-    nextHotspotYaw: 315,
-    nextHotspotPitch: 0,
-    prevHotspotYaw: 135,
-    prevHotspotPitch: 0
+    file: "photos/img5.jpeg"
   },
   {
     id: "img6",
     label: "Parking Approach",
     sublabel: "Path leading to parking area",
-    file: "photos/img6.jpeg",
-    defaultYaw: 316,
-    defaultPitch: 0,
-    nextHotspotYaw: 245,
-    nextHotspotPitch: 0,
-    prevHotspotYaw: 65,
-    prevHotspotPitch: 0
+    file: "photos/img6.jpeg"
   },
   {
     id: "img7",
     label: "Parking Lot",
     sublabel: "Campus parking area",
-    file: "photos/img7.jpeg",
-    defaultYaw: 322,
-    defaultPitch: 0,
-    nextHotspotYaw: null,
-    nextHotspotPitch: 0,
-    prevHotspotYaw: 142,
-    prevHotspotPitch: 0
+    file: "photos/img7.jpeg"
   }
 ];
 
