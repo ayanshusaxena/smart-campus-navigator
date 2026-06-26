@@ -359,35 +359,6 @@
   <script src="js/proximity.js"></script>
   <script src="js/app.js"></script>
   <script>
-    (function addRecenterButton() {
-      const timer = setInterval(function () {
-        if (typeof map === 'undefined' || !map) return;
-        window.__CNS_map = map;
-
-        const zoomControl = document.querySelector('.leaflet-control-zoom');
-        if (!zoomControl || document.getElementById('recenter-btn')) return;
-
-        zoomControl.insertAdjacentHTML('afterend', `
-          <button id="recenter-btn"
-                  aria-label="Center on my location"
-                  onclick="(function(){
-                    const loc = window.__CNS_userLocation;
-                    if(loc && loc.lat && window.__CNS_map) {
-                      window.__CNS_map.flyTo([loc.lat, loc.lng], 18, {duration: 0.8});
-                    }
-                  })()"
-                  style="display:flex; align-items:center; justify-content:center;
-                         width:36px; height:36px; border-radius:8px;
-                         background:var(--color-surface, #1e1e2e);
-                         border:1px solid rgba(255,255,255,0.12);
-                         color:var(--color-text-primary, #fff);
-                         cursor:pointer; margin-top:4px; font-size:18px;">
-            ◎
-          </button>
-        `);
-        clearInterval(timer);
-      }, 100);
-    })();
   </script>
   <div id="photo-lightbox"
     style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);align-items:center;justify-content:center;">
