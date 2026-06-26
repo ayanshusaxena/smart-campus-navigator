@@ -1,5 +1,5 @@
 // sv-app.js - Smart Campus Navigator Street View
-// Pannellum-based 360° panorama viewer
+// CSS-based panorama slider
 
 // Panorama data with yaw angles from field measurement
 
@@ -134,70 +134,95 @@ function loadScene(index) {
   currentIndex = index;
   const loc = LOCATIONS[index];
 
-  // Build hotspots
-  const hotspots = [];
-
-  // Next hotspot
-  if (loc.nextHotspotYaw !== null && index < LOCATIONS.length - 1) {
-    hotspots.push({
-      pitch: loc.nextHotspotPitch,
-      yaw: loc.nextHotspotYaw,
-      type: 'scene',
-      text: '→ ' + LOCATIONS[index + 1].label,
-      cssClass: 'pnlm-hotspot-base',
-      clickHandlerFunc: function() { loadScene(index + 1); }
-    });
-  }
-
-  // Prev hotspot
-  if (index > 0 && loc.prevHotspotYaw !== null) {
-    hotspots.push({
-      pitch: loc.prevHotspotPitch,
-      yaw: loc.prevHotspotYaw,
-      type: 'scene',
-      text: '← ' + LOCATIONS[index - 1].label,
-      cssClass: 'pnlm-hotspot-base',
-      clickHandlerFunc: function() { loadScene(index - 1); }
-    });
-  }
-
   // Destroy previous viewer
   if (viewer) {
-    viewer.destroy();
     viewer = null;
   }
 
-  // Init Pannellum
-  viewer = pannellum.viewer('panorama-container', {
-    type: 'equirectangular',
-    panorama: loc.file,
-    autoLoad: true,
-    autoRotate: -2,
-    autoRotateStopDelay: 3000,
-    compass: false,
-    showZoomCtrl: true,
-    showFullscreenCtrl: true,
-    mouseZoom: true,
-    keyboardZoom: true,
-    yaw: loc.defaultYaw,
-    pitch: loc.defaultPitch,
-    hfov: 100,
-    minHfov: 50,
-    maxHfov: 120,
-    hotSpots: hotspots,
-    strings: {
-      loadButtonLabel: 'Click to load panorama',
-      loadingLabel: 'Loading...',
-      bylineLabel: '',
-      noPanoramaError: 'Panorama image not found.',
-      fileAccessError: 'Could not load image.',
-      malformedURLError: 'Invalid URL.',
-      iOS8WebGLError: 'WebGL not supported.',
-      genericWebGLError: 'WebGL error.',
-      textureSizeError: 'Image too large.',
-      unknownError: 'Unknown error.'
-    }
+  const container = document.getElementById('panorama-container');
+  container.innerHTML = '';
+
+  // Create draggable panorama
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText = `
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+    user-select: none;
+  `;
+
+  const img = document.createElement('img');
+  img.src = loc.file;
+  img.style.cssText = `
+    height: 100%;
+    width: auto;
+    max-width: none;
+    display: block;
+    pointer-events: none;
+    position: absolute;
+    left: 0;
+    top: 0;
+  `;
+
+  wrapper.appendChild(img);
+  container.appendChild(wrapper);
+
+  // Wait for image to load then center it
+  img.onload = function() {
+    const startX = (img.offsetWidth - wrapper.offsetWidth) / 2;
+    wrapper.scrollLeft = startX;
+    img.style.left = '';
+    img.style.position = 'relative';
+    wrapper.style.overflowX = 'scroll';
+    wrapper.style.overflowY = 'hidden';
+    wrapper.style.scrollbarWidth = 'none';
+  };
+
+  // Drag to scroll
+  let isDragging = false;
+  let startX = 0;
+  let scrollLeft = 0;
+
+  wrapper.addEventListener('mousedown', function(e) {
+    isDragging = true;
+    wrapper.style.cursor = 'grabbing';
+    startX = e.pageX - wrapper.offsetLeft;
+    scrollLeft = wrapper.scrollLeft;
   });
+
+  wrapper.addEventListener('mouseleave', function() {
+    isDragging = false;
+    wrapper.style.cursor = 'grab';
+  });
+
+  wrapper.addEventListener('mouseup', function() {
+    isDragging = false;
+    wrapper.style.cursor = 'grab';
+  });
+
+  wrapper.addEventListener('mousemove', function(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+    const x = e.pageX - wrapper.offsetLeft;
+    const walk = (x - startX) * 1.5;
+    wrapper.scrollLeft = scrollLeft - walk;
+  });
+
+  // Touch support for mobile
+  wrapper.addEventListener('touchstart', function(e) {
+    startX = e.touches[0].pageX;
+    scrollLeft = wrapper.scrollLeft;
+  }, { passive: true });
+
+  wrapper.addEventListener('touchmove', function(e) {
+    const x = e.touches[0].pageX;
+    const walk = (startX - x) * 1.5;
+    wrapper.scrollLeft = scrollLeft + walk;
+  }, { passive: true });
+
+  viewer = wrapper;
 
   updateUI(index);
 }
