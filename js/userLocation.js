@@ -69,9 +69,8 @@
     recenterBtn.id = 'recenter-btn';
     recenterBtn.setAttribute('aria-label', 'Center on my location');
     recenterBtn.title = 'My location';
-   recenterBtn.innerHTML = '⊕';
-    recenterBtn.className = 'leaflet-control-recenter disabled';
-    recenterBtn.disabled = true;
+    recenterBtn.innerHTML = '⊕';
+    recenterBtn.className = 'leaflet-control-recenter';
 
     recenterBtn.addEventListener('click', function () {
       const loc = global.__CNS_userLocation;
