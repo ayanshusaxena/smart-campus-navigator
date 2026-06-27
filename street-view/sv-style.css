@@ -1,75 +1,111 @@
+/* ============================================
+   Smart Campus Navigator — Street View Styles
+   CSS perspective cylindrical-feel panorama viewer
+   ============================================ */
+
 * {
   margin: 0;
   padding: 0;
   box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
 }
 
 body {
-  background: #0f0f1a;
+  background: #000;
   color: #e0e8ff;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   display: flex;
   flex-direction: column;
-  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-text-size-adjust: 100%;
 }
 
-/* Navbar */
+/* ---- Top Navbar ---- */
+
 .sv-navbar {
-  height: 56px;
-  background: rgba(15, 15, 26, 0.97);
-  border-bottom: 1px solid rgba(255,255,255,0.08);
+  height: 52px;
+  background: rgba(0, 0, 0, 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 16px;
   z-index: 100;
   flex-shrink: 0;
+  position: relative;
 }
 
 .sv-back-btn {
-  color: #4f9cf9;
+  color: #fff;
   text-decoration: none;
   font-size: 13px;
   font-weight: 600;
   padding: 6px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(79,156,249,0.3);
-  transition: background 0.2s;
+  background: rgba(255, 255, 255, 0.08);
+  border: none;
+  transition: background 0.2s ease;
   white-space: nowrap;
+  letter-spacing: 0.01em;
 }
 
 .sv-back-btn:hover {
-  background: rgba(79,156,249,0.1);
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.sv-back-btn:active {
+  background: rgba(255, 255, 255, 0.2);
 }
 
 .sv-title {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+  overflow: hidden;
 }
 
 .sv-icon {
-  font-size: 20px;
+  font-size: 18px;
+  flex-shrink: 0;
 }
 
 .sv-title-main {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  letter-spacing: 0.01em;
 }
 
 .sv-title-sub {
   font-size: 11px;
-  color: #5060a0;
+  color: rgba(255, 255, 255, 0.4);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .sv-counter {
-  font-size: 13px;
-  color: #5060a0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.45);
   font-weight: 600;
   white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
+
+/* ---- Panorama Container ---- */
 
 #panorama-container {
   flex: 1;
@@ -78,84 +114,144 @@ body {
   overflow: hidden;
   position: relative;
   background: #000;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
+#panorama-container.is-dragging {
+  cursor: grabbing;
+}
+
+/* Hide ALL scrollbars */
 #panorama-container::-webkit-scrollbar {
-  display: none;
+  display: none !important;
 }
 
-/* Bottom nav */
+/* Panorama image — GPU-accelerated, perspective-aware */
+.sv-pano-image {
+  height: 100%;
+  width: auto;
+  max-width: none;
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+
+  /* Pivot at image centre so rotateY curves correctly */
+  transform-origin: center center;
+
+  /* GPU compositor layer */
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+
+  /* Image quality */
+  image-rendering: auto;
+
+  /* No native browser interactions */
+  pointer-events: none;
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+/* Scene fade-in */
+.sv-pano-image.loading  { opacity: 0; }
+.sv-pano-image.loaded   { opacity: 1; transition: opacity 0.28s ease; }
+
+/* ---- Bottom Navigation ---- */
+
 .sv-bottom-nav {
-  height: 64px;
-  background: rgba(15,15,26,0.97);
-  border-top: 1px solid rgba(255,255,255,0.08);
+  height: 56px;
+  background: rgba(0, 0, 0, 0.85);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 20px;
+  padding: 0 16px;
   flex-shrink: 0;
-  gap: 16px;
+  gap: 12px;
+  z-index: 100;
 }
 
 .sv-nav-btn {
-  background: rgba(79,156,249,0.15);
-  color: #4f9cf9;
-  border: 1px solid rgba(79,156,249,0.3);
-  border-radius: 10px;
-  padding: 10px 20px;
-  font-size: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: none;
+  border-radius: 24px;
+  padding: 10px 22px;
+  font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: background 0.2s ease, transform 0.1s ease;
   white-space: nowrap;
+  letter-spacing: 0.02em;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 
 .sv-nav-btn:hover {
-  background: rgba(79,156,249,0.25);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.sv-nav-btn:active {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(0.96);
 }
 
 .sv-nav-btn:disabled {
-  opacity: 0.3;
+  opacity: 0.25;
   cursor: not-allowed;
+  transform: none;
 }
 
-/* Location dots */
+/* ---- Location Dots ---- */
+
 .sv-dots {
   display: flex;
   gap: 8px;
   align-items: center;
-  flex-wrap: wrap;
   justify-content: center;
 }
 
 .sv-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   cursor: pointer;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .sv-dot.active {
-  background: #4f9cf9;
-  transform: scale(1.4);
+  background: #fff;
+  transform: scale(1.5);
+  box-shadow: 0 0 6px rgba(255, 255, 255, 0.4);
 }
 
 .sv-dot:hover {
-  background: rgba(79,156,249,0.6);
+  background: rgba(255, 255, 255, 0.5);
 }
 
-/* Location name strip */
+/* ---- Location Chip Strip ---- */
+
 .sv-location-strip {
   display: flex;
   overflow-x: auto;
-  gap: 8px;
-  padding: 8px 20px;
-  background: rgba(10,10,20,0.98);
-  border-top: 1px solid rgba(255,255,255,0.05);
+  gap: 6px;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.92);
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
   flex-shrink: 0;
   scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-x;
+  z-index: 100;
 }
 
 .sv-location-strip::-webkit-scrollbar {
@@ -169,29 +265,60 @@ body {
   font-size: 12px;
   font-weight: 600;
   cursor: pointer;
-  border: 1px solid rgba(255,255,255,0.08);
-  color: #7080c0;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.45);
   background: transparent;
-  transition: all 0.2s;
+  transition: all 0.2s ease;
   white-space: nowrap;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  letter-spacing: 0.01em;
 }
 
 .sv-loc-chip.active {
-  background: rgba(79,156,249,0.15);
-  border-color: #4f9cf9;
-  color: #4f9cf9;
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #fff;
 }
 
 .sv-loc-chip:hover {
-  border-color: rgba(79,156,249,0.4);
-  color: #c8d8ff;
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.7);
 }
 
-/* Mobile responsive */
+/* ---- Mobile Responsive ---- */
+
 @media (max-width: 600px) {
-  .sv-title-sub { display: none; }
-  .sv-navbar { padding: 0 12px; }
-  .sv-nav-btn { padding: 8px 14px; font-size: 13px; }
-  .sv-bottom-nav { padding: 0 12px; }
-  .sv-location-strip { padding: 6px 12px; }
+  .sv-title-sub {
+    display: none;
+  }
+
+  .sv-navbar {
+    padding: 0 12px;
+    height: 48px;
+  }
+
+  .sv-nav-btn {
+    padding: 9px 16px;
+    font-size: 12px;
+  }
+
+  .sv-bottom-nav {
+    padding: 0 12px;
+    height: 52px;
+  }
+
+  .sv-location-strip {
+    padding: 6px 12px;
+  }
+
+  .sv-back-btn {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+
+  .sv-counter {
+    font-size: 11px;
+  }
 }
+
