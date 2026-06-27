@@ -790,3 +790,34 @@ body {
     width: auto;
   }
 }
+/* Recenter button - matches Leaflet zoom buttons */
+.leaflet-control-recenter {
+  display: block;
+  width: 26px;
+  height: 26px;
+  line-height: 26px;
+
+  text-align: center;
+  text-decoration: none;
+
+  background: #fff;
+  color: #333;
+
+  border: none;
+  border-top: 1px solid #ccc;
+
+  font-size: 18px;
+  font-weight: bold;
+
+  cursor: pointer;
+  padding: 0;
+}
+
+.leaflet-control-recenter:hover {
+  background: #f4f4f4;
+}
+
+.leaflet-control-recenter.disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
