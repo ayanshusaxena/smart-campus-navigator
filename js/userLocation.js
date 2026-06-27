@@ -69,25 +69,9 @@
     recenterBtn.id = 'recenter-btn';
     recenterBtn.setAttribute('aria-label', 'Center on my location');
     recenterBtn.title = 'My location';
-    recenterBtn.innerHTML = '⊕';
-    recenterBtn.style.cssText = [
-      'display:flex',
-      'align-items:center',
-      'justify-content:center',
-      'width:26px',
-      'height:26px',
-      'margin-top:1px',
-      'background:white',
-      'border:none',
-      'border-radius:2px',
-      'color:#333',
-      'font-size:18px',
-      'line-height:1',
-      'cursor:pointer',
-      'box-shadow:none',
-      '-webkit-user-select:none',
-      'user-select:none',
-    ].join(';');
+   recenterBtn.innerHTML = '⊕';
+    recenterBtn.className = 'leaflet-control-recenter disabled';
+    recenterBtn.disabled = true;
 
     recenterBtn.addEventListener('click', function () {
       const loc = global.__CNS_userLocation;
