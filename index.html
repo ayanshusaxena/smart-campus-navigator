@@ -1,54 +1,624 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="description" content="Street View panorama tour of Dr. B.R. Ambedkar Polytechnic College campus">
-  <title>Street View — Smart Campus Navigator</title>
 
-  <link rel="stylesheet" href="sv-style.css">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smart Campus Navigator - DRBRA Polytechnic Gwalior</title>
+  <meta name="description"
+    content="Interactive campus map for Dr. B. R. Ambedkar Polytechnic College, Gwalior — find buildings, labs, sports ground, canteen and more." />
+
+  <link rel="manifest" href="manifest.json" />
+  <link rel="icon" type="image/png" sizes="512x512" href="icons/icon-512.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png" />
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="theme-color" content="#4f9cf9" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="CNS" />
+
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600&display=swap" rel="stylesheet" />
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="" />
+
+  <!-- App CSS -->
+  <link rel="stylesheet" href="css/style.css" />
+
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="js/firebase.js"></script>
+  <script src="js/auth.js"></script>
 </head>
+
 <body>
 
-  <!-- Top bar -->
-  <header class="sv-navbar">
-    <a href="../index.html" class="sv-back-btn">
-      ← Back
-    </a>
-    <div class="sv-title">
-      <span class="sv-icon">🚶</span>
-      <div>
-        <div class="sv-title-main" id="location-title">
-          Main Gate
-        </div>
-        <div class="sv-title-sub">
-          Dr. B.R. Ambedkar Polytechnic College
+  <!-- Map canvas (full screen, z-index 0) -->
+  <div id="map"></div>
+
+  <!-- ── Top Navbar ────────────────────────────────────── -->
+  <header class="navbar">
+    <div class="navbar-left">
+      <div class="logo">
+        <div class="logo-mark">CN</div>
+        <div class="logo-text">
+          <span class="logo-title">CNS</span>
+          <span class="logo-subtitle">Campus Navigation System</span>
         </div>
       </div>
     </div>
-    <div class="sv-counter" id="location-counter">1 / 7</div>
+
+    <!-- navbar-center intentionally empty (search moved to floating bar) -->
+    <div class="navbar-center"></div>
+
+    <div class="navbar-right">
+      <button id="lang-toggle">EN / HI</button>
+      <!-- Auth button group -->
+      <div id="auth-controls" style="display:inline-flex; align-items:center; gap:8px;">
+        <span id="auth-user-info" style="display:none; font-size:12px; color:var(--color-text-secondary); max-width:120px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+
+        <button id="btn-login" onclick="showLoginModal()"
+          style="background:var(--color-accent); color:var(--color-on-accent); border:none; border-radius:8px; padding:6px 14px; font-size:13px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+          Login
+        </button>
+      </div>
+      <button id="hamburger-btn" onclick="toggleHamburgerMenu()"
+        style="background:var(--color-surface); border:none; color:var(--color-text);
+        font-size:20px; cursor:pointer; padding:6px 10px;
+        border-radius:8px; display:inline-flex; align-items:center;">
+        ☰
+      </button>
+    </div>
   </header>
 
-  <!-- Panorama viewer container -->
-  <div id="panorama-container"></div>
+  <!-- Hamburger Menu -->
+  <div id="hamburger-menu" style="
+    display:none;
+    position:fixed;
+    top:56px;
+    right:0;
+    width:260px;
+    background:var(--color-surface);
+    border-left:1px solid var(--color-border);
+    border-bottom:1px solid var(--color-border);
+    border-radius:0 0 0 12px;
+    z-index:5000;
+    padding:8px 0;
+    box-shadow: -4px 4px 24px var(--color-shadow);
+  ">
+    <div id="menu-admin-item" style="display:none;">
+      <a href="admin.html"
+        style="display:flex; align-items:center; gap:12px;
+        padding:14px 20px; color:var(--color-text);
+        text-decoration:none; font-size:14px;
+        border-bottom:1px solid var(--color-border);">
+        <span style="font-size:18px;">⚙️</span>
+        <div>
+          <div style="font-weight:600;">Admin Panel</div>
+          <div style="font-size:11px; color:var(--color-text-secondary);">
+            Manage campus pins
+          </div>
+        </div>
+      </a>
+    </div>
 
-  <!-- Bottom navigation strip -->
-  <div class="sv-bottom-nav">
-    <button class="sv-nav-btn" id="btn-prev" onclick="goToPrev()">
-      ← Prev
+    <button onclick="openReportModal(); toggleHamburgerMenu();"
+      style="width:100%; display:flex; align-items:center; gap:12px;
+      padding:14px 20px; background:var(--color-surface); border:none;
+      border-bottom:1px solid var(--color-border);
+      color:var(--color-text); cursor:pointer; font-size:14px; text-align:left;">
+      <span style="font-size:18px;">🚩</span>
+      <div>
+        <div style="font-weight:600;">Report an Issue</div>
+        <div style="font-size:11px; color:var(--color-text-secondary);">
+          Wrong pin location or name
+        </div>
+      </div>
     </button>
 
-    <!-- Location dots -->
-    <div class="sv-dots" id="location-dots"></div>
-
-    <button class="sv-nav-btn" id="btn-next" onclick="goToNext()">
-      Next →
+    <button onclick="openAboutModal(); toggleHamburgerMenu();"
+      style="width:100%; display:flex; align-items:center; gap:12px;
+      padding:14px 20px; background:var(--color-surface); border:none;
+      border-bottom:1px solid var(--color-border);
+      color:var(--color-text); cursor:pointer; font-size:14px; text-align:left;">
+      <span style="font-size:18px;">ℹ️</span>
+      <div>
+        <div style="font-weight:600;">About</div>
+        <div style="font-size:11px; color:var(--color-text-secondary);">
+          Project info and credits
+        </div>
+      </div>
     </button>
+
+    <!-- Street View -->
+    <a href="street-view/index.html"
+      style="display:flex; align-items:center; gap:12px;
+      padding:14px 20px; color:var(--color-text);
+      text-decoration:none; font-size:14px;
+      border-bottom:1px solid var(--color-border,#333);">
+      <span style="font-size:18px;">🚶</span>
+      <div>
+        <div style="font-weight:600;">Street View</div>
+        <div style="font-size:11px; color:var(--color-text-secondary);">
+          360° campus walkthrough
+        </div>
+      </div>
+    </a>
+
+    <div style="border-bottom:1px solid var(--color-border);">
+      <button onclick="toggleThemeSubmenu()"
+        style="width:100%; display:flex; align-items:center;
+        justify-content:space-between;
+        padding:14px 20px; background:var(--color-surface); border:none;
+        color:var(--color-text); cursor:pointer;
+        font-size:14px; text-align:left;">
+        <div style="display:flex; align-items:center; gap:12px;">
+          <span style="font-size:18px;">🎨</span>
+          <div>
+            <div style="font-weight:600;">Theme</div>
+            <div id="current-theme-label"
+              style="font-size:11px;
+              color:var(--color-text-secondary);">Dark</div>
+          </div>
+        </div>
+        <span id="theme-chevron"
+          style="font-size:12px;
+          color:var(--color-text-secondary);
+          transition:transform 0.2s;">▼</span>
+      </button>
+
+      <div id="theme-submenu" style="display:none;
+        padding:4px 20px 12px;">
+        <button onclick="setTheme('dark')"
+          id="theme-opt-dark"
+          style="width:100%; display:flex; align-items:center;
+          gap:10px; padding:10px 12px; margin-bottom:4px;
+          background:var(--color-surface-2); border:1px solid var(--color-border);
+          border-radius:10px; color:var(--color-text);
+          cursor:pointer; font-size:13px; text-align:left;">
+          <span>🌑</span>
+          <div>
+            <div style="font-weight:500;">Dark</div>
+            <div style="font-size:11px; color:var(--color-text-secondary);">
+              Default dark mode
+            </div>
+          </div>
+          <span id="check-dark" style="margin-left:auto;">✓</span>
+        </button>
+
+        <button onclick="setTheme('light')"
+          id="theme-opt-light"
+          style="width:100%; display:flex; align-items:center;
+          gap:10px; padding:10px 12px; margin-bottom:4px;
+          background:var(--color-surface-2); border:1px solid var(--color-border);
+          border-radius:10px; color:var(--color-text);
+          cursor:pointer; font-size:13px; text-align:left;">
+          <span>☀️</span>
+          <div>
+            <div style="font-weight:500;">Light</div>
+            <div style="font-size:11px; color:var(--color-text-secondary);">
+              Clean white mode
+            </div>
+          </div>
+          <span id="check-light" style="margin-left:auto; display:none;">✓</span>
+        </button>
+
+        <button onclick="setTheme('midnight')"
+          id="theme-opt-midnight"
+          style="width:100%; display:flex; align-items:center;
+          gap:10px; padding:10px 12px;
+          background:var(--color-surface-2); border:1px solid var(--color-border);
+          border-radius:10px; color:var(--color-text);
+          cursor:pointer; font-size:13px; text-align:left;">
+          <span>🌌</span>
+          <div>
+            <div style="font-weight:500;">Midnight</div>
+            <div style="font-size:11px; color:var(--color-text-secondary);">
+              Deep space black
+            </div>
+          </div>
+          <span id="check-midnight" style="margin-left:auto; display:none;">✓</span>
+        </button>
+      </div>
+    </div>
+
+    <div id="menu-user-section" style="display:none; padding:12px 20px;">
+      <div style="font-size:11px; color:var(--color-text-secondary);
+        margin-bottom:6px;">Signed in as</div>
+      <div id="menu-user-email"
+        style="font-size:13px; color:var(--color-text);
+        font-weight:500; word-break:break-all;"></div>
+      <button onclick="signOut(); toggleHamburgerMenu();"
+        style="margin-top:10px; width:100%; padding:8px;
+        background:var(--color-surface-2); border:1px solid var(--color-border);
+        border-radius:8px; color:var(--color-text-secondary);
+        font-size:13px; cursor:pointer;">
+        Logout
+      </button>
+    </div>
+
+    <div id="menu-guest-section" style="padding:12px 20px;">
+      <div style="font-size:12px; color:var(--color-text-secondary);
+        margin-bottom:8px;">Not signed in</div>
+      <button onclick="showLoginModal(); toggleHamburgerMenu();"
+        style="width:100%; padding:8px 12px;
+        background:var(--color-accent); color:var(--color-on-accent);
+        border:none; border-radius:8px; font-size:13px; cursor:pointer;">
+        🔐 Login
+      </button>
+    </div>
   </div>
 
-  <!-- Location label strip -->
-  <div class="sv-location-strip" id="location-strip"></div>
+  <!-- ── Floating Search Bar (Google Maps style) ───────── -->
+  <div class="search-container">
+    <div class="search-input-wrapper">
+      <!-- Search icon (inline SVG) -->
+      <svg class="search-icon" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <circle cx="9" cy="9" r="6" stroke="currentColor" stroke-width="1.75" />
+        <path d="M13.5 13.5L17 17" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" />
+      </svg>
+      <input type="search" id="search-input" class="search-input" autocomplete="off" spellcheck="false" />
+    </div>
+    <div id="search-results" class="search-results"></div>
+  </div>
 
-  <script src="sv-app.js"></script>
+  <!-- ── Sidebar (starts below search bar) ─────────────── -->
+  <aside id="sidebar" class="sidebar sidebar-collapsed">
+    <div class="sidebar-header">
+      <div class="sidebar-title-group">
+        <h2 id="sidebar-title"></h2>
+        <span id="sidebar-subtitle" class="sidebar-subtitle"></span>
+      </div>
+      <button id="sidebar-toggle" class="icon-button" aria-label="Close sidebar">
+        &#10005;
+      </button>
+    </div>
+
+    <div id="sidebar-default" class="sidebar-default">
+      <p id="sidebar-default-text"></p>
+    </div>
+
+    <div id="location-details" class="location-details hidden">
+      <div class="location-header">
+        <h3 id="location-name"></h3>
+        <span id="location-category" class="badge"></span>
+      </div>
+
+      <div class="location-meta">
+        <div class="meta-item">
+          <span class="meta-label" id="floor-label"></span>
+          <span class="meta-value" id="location-floor"></span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label" id="block-label"></span>
+          <span class="meta-value" id="location-block"></span>
+        </div>
+      </div>
+
+      <button id="btn-navigate-live" style="width: 100%; padding: 12px; background: var(--color-accent); color: var(--color-on-accent); border: none; border-radius: 8px; font-weight: 600; font-size: 14px; margin-top: 12px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 8px;">
+        🧭 Navigate Here
+      </button>
+
+      <!-- BUG 4 — Photo area (populated by app.js) -->
+      <div class="location-photo">
+        <div id="location-photo-area">
+          <div class="photo-placeholder">
+            <span style="font-size:24px;display:block;margin-bottom:6px;">📷</span>
+            <span>No photo available</span>
+          </div>
+        </div>
+      </div>
+
+      <p id="location-description" class="location-description"></p>
+    </div>
+  </aside>
+
+  <div id="active-nav-overlay" style="display: none; position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 1000; background: var(--color-surface); padding: 12px 18px; border-radius: 18px; box-shadow: 0 4px 12px var(--color-shadow); flex-direction: column; align-items: stretch; gap: 8px; min-width: 240px;">
+    <div id="active-nav-label" style="font-weight: 600; font-size: 14px; color: var(--color-text); text-align:center;">Navigating...</div>
+    <div id="proximity-notice" class="proximity-notice" role="status" aria-live="polite" style="position:static; transform:none; pointer-events:none;">
+      <div class="proximity-notice-inner"></div>
+    </div>
+    <div id="turn-indicator" style="display:none;
+      background:var(--color-surface-2); color:var(--color-text);
+      padding:6px 14px; border-radius:20px;
+      font-size:14px; font-weight:600;
+      text-align:center;">
+    </div>
+    <button id="btn-stop-nav" style="position: relative; z-index: 10; background: var(--color-accent); color: var(--color-on-accent); border: none; padding: 8px 14px; border-radius: 20px; font-weight: bold; cursor: pointer;">Stop Navigation</button>
+  </div>
+
+  <!-- Street View floating button -->
+  <a href="street-view/index.html" id="sv-float-btn"
+    style="position:fixed; bottom:90px; right:16px;
+    z-index:1000; background:var(--color-surface,#1a1a2e);
+    border:1px solid var(--color-border,rgba(255,255,255,0.08));
+    border-radius:12px; padding:10px 14px;
+    display:flex; align-items:center; gap:8px;
+    text-decoration:none; color:var(--color-text,#fff);
+    font-size:13px; font-weight:600;
+    box-shadow:0 4px 20px rgba(0,0,0,0.3);">
+    🚶 Street View
+  </a>
+
+  <!-- ── Leaflet JS ─────────────────────────────────────── -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+
+  <!-- BUG 8: Leaflet Rotate plugin -->
+  <script src="https://cdn.jsdelivr.net/npm/leaflet-rotate@0.2.8/dist/leaflet-rotate-src.js"></script>
+
+  <!-- ── App Scripts ────────────────────────────────────── -->
+  <script src="js/locations.js"></script>
+  <script src="js/lang.js"></script>
+  <script src="js/routing.js"></script>
+  <script src="js/userLocation.js"></script>
+  <script src="js/proximity.js"></script>
+  <script src="js/app.js"></script>
+  <script>
+  </script>
+  <div id="photo-lightbox"
+    style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,0.88);backdrop-filter:blur(8px);align-items:center;justify-content:center;">
+    <img id="lightbox-img" style="max-width:90vw;max-height:85vh;object-fit:contain;border-radius:16px;" />
+    <button id="lightbox-close"
+      style="position:fixed;top:20px;right:20px;width:40px;height:40px;border-radius:50%;border:none;background:var(--color-surface-2);color:var(--color-text);font-size:20px;cursor:pointer;display:flex;align-items:center;justify-content:center;">✕</button>
+  </div>
+
+  <!-- Login Modal -->
+  <div id="login-modal" style="display:none; position:fixed; inset:0; z-index:9999;
+    background:rgba(0,0,0,0.75); align-items:center; justify-content:center;
+    backdrop-filter:blur(6px);">
+    <div style="background:var(--color-surface); border:1px solid var(--color-border); border-radius:20px;
+      padding:36px 28px; width:320px; max-width:90vw; text-align:center; box-shadow:0 20px 60px var(--color-shadow); position:relative;">
+      <button onclick="hideLoginModal()" style="position:absolute; top:14px; right:14px; background:var(--color-surface); border:none; color:var(--color-text-secondary); font-size:18px; cursor:pointer; padding:4px 8px; border-radius:6px; line-height:1;">✕</button>
+      
+      <div style="font-size:32px; margin-bottom:8px;">🗺️</div>
+      <h2 style="margin:0 0 4px; font-size:20px; font-weight:700; color:var(--color-text); letter-spacing:-0.3px;">Campus Navigator</h2>
+      <p style="margin:0 0 24px; font-size:13px; color:var(--color-text-secondary);">
+        Dr. B.R. Ambedkar Polytechnic College
+      </p>
+
+      <div style="display:flex; align-items:center; gap:10px; margin-bottom:16px;">
+        <div style="flex:1; height:1px; background:var(--color-border);"></div>
+        <span style="font-size:11px; color:var(--color-text-secondary);">Sign in to continue</span>
+        <div style="flex:1; height:1px; background:var(--color-border);"></div>
+      </div>
+
+      <button onclick="signInWithGoogle()"
+        style="width:100%; padding:13px 16px; border-radius:12px; border:1px solid var(--color-border);
+        background:var(--color-surface-2); color:var(--color-text);
+        font-size:14px; font-weight:500; cursor:pointer; display:flex; align-items:center;
+        justify-content:center; gap:10px; transition:background 0.2s; margin-bottom:12px;">
+        <svg width="18" height="18" viewBox="0 0 18 18">
+          <path fill="#4285F4" d="M16.51 8H8.98v3h4.3c-.18 1-.74 1.48-1.6 2.04v2.01h2.6a7.8 7.8 0 0 0 2.38-5.88c0-.57-.05-.66-.15-1.18z"/>
+          <path fill="#34A853" d="M8.98 17c2.16 0 3.97-.72 5.3-1.94l-2.6-2a4.8 4.8 0 0 1-7.18-2.54H1.83v2.07A8 8 0 0 0 8.98 17z"/>
+          <path fill="#FBBC05" d="M4.5 10.52a4.8 4.8 0 0 1 0-3.04V5.41H1.83a8 8 0 0 0 0 7.18l2.67-2.07z"/>
+          <path fill="#EA4335" d="M8.98 4.18c1.17 0 2.23.4 3.06 1.2l2.3-2.3A8 8 0 0 0 1.83 5.4L4.5 7.49a4.77 4.77 0 0 1 4.48-3.3z"/>
+        </svg>
+        Continue with Google
+      </button>
+
+      <div style="margin-top:18px; padding-top:16px; border-top:1px solid rgba(255,255,255,0.1);">
+        <p style="font-size:11px; color:var(--color-text-secondary);
+                  text-align:center; margin:0 0 12px; letter-spacing:0.5px;
+                  text-transform:uppercase;">Admin Login</p>
+
+        <input  id="admin-email-input"
+                type="email"
+                placeholder="Admin email"
+                autocomplete="username"
+                style="width:100%; box-sizing:border-box; padding:9px 12px;
+                       border-radius:8px; border:1px solid rgba(255,255,255,0.15);
+                       background:rgba(255,255,255,0.07); color:var(--color-text-primary);
+                       font-size:14px; font-family:inherit; outline:none;
+                       margin-bottom:8px;" />
+
+        <input  id="admin-pass-input"
+                type="password"
+                placeholder="Password"
+                autocomplete="current-password"
+                style="width:100%; box-sizing:border-box; padding:9px 12px;
+                       border-radius:8px; border:1px solid rgba(255,255,255,0.15);
+                       background:rgba(255,255,255,0.07); color:var(--color-text-primary);
+                       font-size:14px; font-family:inherit; outline:none;
+                       margin-bottom:8px;" />
+
+        <p id="admin-login-error"
+           style="color:#f87171; font-size:12px; min-height:16px;
+                  margin:0 0 8px; text-align:center;"></p>
+
+        <button onclick="signInWithEmailPassword()"
+                style="width:100%; padding:10px; border-radius:8px; border:none;
+                       background:var(--color-accent, #4f9cf9); color:#fff;
+                       font-size:14px; font-weight:600; font-family:inherit;
+                       cursor:pointer; letter-spacing:0.2px;">
+          Sign in as Admin
+        </button>
+      </div>
+
+      <p style="font-size:11px; color:var(--color-text-secondary); margin:0 0 16px;">
+        Student or Admin — same Google login.<br>Admin access granted automatically.
+      </p>
+
+      <button onclick="hideLoginModal()"
+        style="background:var(--color-surface); border:none; color:var(--color-text-secondary);
+        font-size:13px; cursor:pointer; text-decoration:underline;">
+        Continue without signing in
+      </button>
+    </div>
+  </div>
+
+  <!-- Report Issue Modal -->
+  <div id="report-modal" style="display:none; position:fixed; inset:0;
+    z-index:9999; background:rgba(0,0,0,0.6);
+    align-items:center; justify-content:center;">
+    <div style="background:var(--color-surface);
+      border-radius:16px; padding:28px 24px; width:320px;
+      max-width:90vw; box-shadow:0 8px 32px var(--color-shadow);">
+      <h3 style="margin:0 0 16px; font-size:16px;
+        color:var(--color-text);">🚩 Report an Issue</h3>
+      <select id="report-pin-select"
+        style="width:100%; padding:10px; border-radius:8px;
+        background:var(--color-surface-2);
+        border:1px solid var(--color-border);
+        color:var(--color-text); font-size:13px; margin-bottom:12px;">
+        <option value="">Select location...</option>
+      </select>
+      <select id="report-type"
+        style="width:100%; padding:10px; border-radius:8px;
+        background:var(--color-surface-2);
+        border:1px solid var(--color-border);
+        color:var(--color-text); font-size:13px; margin-bottom:12px;">
+        <option value="wrong_location">Wrong location on map</option>
+        <option value="wrong_name">Wrong name</option>
+        <option value="missing_pin">Missing location</option>
+        <option value="other">Other issue</option>
+      </select>
+      <textarea id="report-description"
+        placeholder="Describe the issue (optional)..."
+        style="width:100%; padding:10px; border-radius:8px;
+        background:var(--color-surface-2);
+        border:1px solid var(--color-border);
+        color:var(--color-text); font-size:13px;
+        resize:none; height:80px; box-sizing:border-box;
+        margin-bottom:12px;"></textarea>
+      <input type="hidden" id="report-user-email">
+      <div style="display:flex; gap:8px;">
+        <button onclick="submitReport()"
+          style="flex:1; padding:10px; background:var(--color-accent);
+          color:var(--color-on-accent); border:none; border-radius:8px;
+          font-size:14px; cursor:pointer; font-weight:600;">
+          Submit
+        </button>
+        <button onclick="closeReportModal()"
+          style="flex:1; padding:10px; background:var(--color-surface-2);
+          border:1px solid var(--color-border);
+          border-radius:8px; color:var(--color-text-secondary);
+          font-size:14px; cursor:pointer;">
+          Cancel
+        </button>
+      </div>
+      <div id="report-status" style="margin-top:10px; font-size:13px;
+        text-align:center; color:var(--color-text-secondary);"></div>
+    </div>
+  </div>
+
+  <!-- About Modal -->
+  <div id="about-modal" style="display:none; position:fixed; inset:0;
+    z-index:9999; background:rgba(0,0,0,0.6);
+    align-items:center; justify-content:center;">
+    <div style="background:var(--color-surface);
+      border-radius:16px; padding:28px 24px; width:320px;
+      max-width:90vw; box-shadow:0 8px 32px var(--color-shadow);
+      text-align:center;">
+      <div style="font-size:40px; margin-bottom:8px;">🗺️</div>
+      <h2 style="margin:0 0 4px; font-size:18px;
+        color:var(--color-text);">Smart Campus Navigator</h2>
+      <p style="margin:0 0 16px; font-size:13px;
+        color:var(--color-text-secondary); line-height:1.5;">
+        Dr. B.R. Ambedkar Polytechnic College, Gwalior<br>
+        Final Year Diploma Project — 2025-26
+      </p>
+      <div style="background:var(--color-surface-2);
+        border-radius:10px; padding:14px; margin-bottom:16px;
+        text-align:left; font-size:12px;
+        color:var(--color-text-secondary); line-height:1.8;">
+        <b style="color:var(--color-text);">Tech Stack</b><br>
+        Leaflet.js · Mapbox · Firebase<br>
+        Dijkstra Routing · GPS Tracking<br>
+        HTML5 · CSS3 · Vanilla JS
+      </div>
+      <button onclick="closeAboutModal()"
+        style="width:100%; padding:10px;
+        background:var(--color-accent);
+        color:var(--color-on-accent); border:none; border-radius:8px;
+        font-size:14px; cursor:pointer;">
+        Close
+      </button>
+    </div>
+  </div>
+
+  <script>
+  function showLoginModal() {
+    document.getElementById('login-modal').style.display = 'flex';
+  }
+  function hideLoginModal() {
+    document.getElementById('login-modal').style.display = 'none';
+  }
+  function toggleHamburgerMenu() {
+    const menu = document.getElementById('hamburger-menu');
+    const isOpen = menu.style.display === 'block';
+    menu.style.display = isOpen ? 'none' : 'block';
+  }
+
+  document.addEventListener('click', function(e) {
+    const menu = document.getElementById('hamburger-menu');
+    const btn = document.getElementById('hamburger-btn');
+    if (menu && btn && !menu.contains(e.target) && !btn.contains(e.target)) {
+      menu.style.display = 'none';
+    }
+  });
+
+  function openAboutModal() {
+    document.getElementById('about-modal').style.display = 'flex';
+  }
+  function closeAboutModal() {
+    document.getElementById('about-modal').style.display = 'none';
+  }
+  function openReportModal() {
+    const user = window.__CNS_currentUser;
+    const emailField = document.getElementById('report-user-email');
+    if (emailField) {
+      emailField.value = user ? user.email : '';
+    }
+    document.getElementById('report-modal').style.display = 'flex';
+  }
+  function closeReportModal() {
+    document.getElementById('report-modal').style.display = 'none';
+  }
+
+  function toggleThemeSubmenu() {
+    const sub = document.getElementById('theme-submenu');
+    const chevron = document.getElementById('theme-chevron');
+    const isOpen = sub.style.display === 'block';
+    sub.style.display = isOpen ? 'none' : 'block';
+    chevron.style.transform = isOpen ? '' : 'rotate(180deg)';
+  }
+
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('cns-theme', theme);
+
+    const labels = { dark: 'Dark', light: 'Light', midnight: 'Midnight' };
+    const el = document.getElementById('current-theme-label');
+    if (el) el.textContent = labels[theme] || 'Dark';
+
+    ['dark', 'light', 'midnight'].forEach(function(t) {
+      const check = document.getElementById('check-' + t);
+      if (check) check.style.display = t === theme ? 'inline' : 'none';
+    });
+  }
+
+  function loadSavedTheme() {
+    const saved = localStorage.getItem('cns-theme') || 'dark';
+    setTheme(saved);
+  }
+
+  loadSavedTheme();
+  </script>
+
+  <script>
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/smart-campus-navigator/sw.js')
+          .catch(err => console.warn('SW registration failed:', err));
+      });
+    }
+  </script>
+
 </body>
+
 </html>
