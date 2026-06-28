@@ -48,7 +48,7 @@
     let smoothLng = null;
     const SMOOTH_ALPHA = 0.25; // lower = smoother but laggier, 0.25 is good balance
     const MIN_MOVE_METERS = 3; // ignore updates smaller than this
-    const MAX_ACCURACY_METERS = 300; // reject if GPS accuracy is worse than this
+    const MAX_ACCURACY_METERS = 200; // reject if GPS accuracy is worse than this
 
     global.__CNS_userLocation = global.__CNS_userLocation || {
       lat: null,
@@ -215,9 +215,7 @@
       global.userLng = smoothedLng;
 
       ensureMarker(displayLatlng).setLatLng(displayLatlng);
-      const displayAccuracy = Math.min(c.accuracy, 25);
-      ensureAccuracyCircle(displayLatlng, displayAccuracy);
-
+      ensureAccuracyCircle(displayLatlng, c.accuracy);
       // Proximity detection (only on live updates)
       if (proximityNotifier && typeof proximityNotifier.update === 'function') {
         const locations =
