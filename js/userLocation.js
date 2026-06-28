@@ -215,7 +215,8 @@
       global.userLng = smoothedLng;
 
       ensureMarker(displayLatlng).setLatLng(displayLatlng);
-      ensureAccuracyCircle(displayLatlng, c.accuracy);
+      const displayAccuracy = Math.min(c.accuracy, 55);
+      ensureAccuracyCircle(displayLatlng, displayAccuracy);
 
       // Proximity detection (only on live updates)
       if (proximityNotifier && typeof proximityNotifier.update === 'function') {
