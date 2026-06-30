@@ -994,7 +994,8 @@
           // Remove pending class — auth has resolved
           document.body.classList.remove('auth-pending');
 
-          if (!user || user.email !== ADMIN_EMAIL) {
+         const ADMIN_EMAILS = ["cricorts.com@gmail.com", "ayanshusaxena2007@gmail.com"];
+            if (!user || !ADMIN_EMAILS.includes(user.email)) {
             document.body.innerHTML = `
               <div style="display:flex;flex-direction:column;align-items:center;
                 justify-content:center;height:100vh;gap:16px;font-family:sans-serif;
