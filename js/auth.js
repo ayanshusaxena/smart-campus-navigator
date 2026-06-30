@@ -42,7 +42,8 @@ function signInWithEmailPassword() {
 }
 
 function isAdmin(user) {
-  return user && user.email === ADMIN_EMAIL;
+  const ADMIN_EMAILS = ["cricorts.com@gmail.com", "ayanshusaxena2007@gmail.com"];
+  return user && ADMIN_EMAILS.includes(user.email);
 }
 
 // Called on every auth state change
